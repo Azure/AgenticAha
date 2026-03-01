@@ -125,19 +125,14 @@ resource azurerm_storage_account main {
   is_hns_enabled                  = each.value.enableBlobNfsV3
   nfsv3_enabled                   = each.value.enableBlobNfsV3
   large_file_share_enabled        = each.value.enableLargeFileShare ? true : null
-  local_user_enabled              = false
   shared_access_key_enabled       = false
   public_network_access_enabled   = false
   allow_nested_items_to_be_public = false
-  network_rules {
-    default_action = "Deny"
-    ip_rules = [
-      jsondecode(data.http.client_address.response_body).ip
+  identity {
+    type = "UserAssigned"
+    identity_ids = [
+      data.azurerm_user_assigned_identity.main.id
     ]
-    private_link_access {
-      endpoint_tenant_id   = data.azurerm_client_config.current.tenant_id
-      endpoint_resource_id = "/subscriptions/${data.azurerm_subscription.current.subscription_id}/providers/Microsoft.Security/dataScanners/storageDataScanner"
-    }
   }
   depends_on = [
     azurerm_resource_group.storage
@@ -167,6 +162,16 @@ resource azurerm_storage_share main {
   depends_on = [
     azurerm_private_endpoint.storage
   ]
+}
+
+resource azurerm_network_security_perimeter_association storage {
+  for_each = {
+    for storageAccount in local.storageAccounts : storageAccount.name => storageAccount
+  }
+  name                                  = "${each.value.name}-storage"
+  resource_id                           = azurerm_storage_account.main[each.value.name].id
+  network_security_perimeter_profile_id = data.azurerm_network_security_perimeter_profile.main.id
+  access_mode                           = var.networkSecurityPerimeter.resourceAccessMode
 }
 
 resource azurerm_private_endpoint storage {

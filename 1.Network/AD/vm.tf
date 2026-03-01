@@ -29,11 +29,6 @@ variable activeDirectory {
         userPassword = string
       })
     })
-    network = object({
-      acceleration = object({
-        enable = bool
-      })
-    })
   })
 }
 
@@ -50,7 +45,7 @@ resource azurerm_network_interface active_directory {
     private_ip_address_allocation = "Dynamic"
     subnet_id                     = data.azurerm_subnet.active_directory.id
   }
-  accelerated_networking_enabled = var.activeDirectory.network.acceleration.enable
+  accelerated_networking_enabled = true
 }
 
 resource terraform_data active_directory {

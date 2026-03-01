@@ -6,23 +6,15 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~>4.57.0"
+      version = "~>4.62.0"
     }
     azuread = {
       source  = "hashicorp/azuread"
-      version = "~>3.7.0"
-    }
-    http = {
-      source  = "hashicorp/http"
-      version = "~>3.5.0"
+      version = "~>3.8.0"
     }
     time = {
       source  = "hashicorp/time"
       version = "~>0.13.0"
-    }
-    azapi = {
-      source  = "azure/azapi"
-      version = "~>2.8.0"
     }
   }
   backend azurerm {
@@ -34,8 +26,13 @@ terraform {
 provider azurerm {
   features {
     netapp {
-      prevent_volume_destruction             = true
+      prevent_volume_destruction             = var.netAppFiles.volumeDestruction.prevent
       delete_backups_on_backup_vault_destroy = false
+    }
+    virtual_machine {
+      delete_os_disk_on_deletion            = true
+      skip_shutdown_and_force_delete        = false
+      detach_implicit_data_disk_on_deletion = false
     }
   }
   subscription_id     = data.terraform_remote_state.foundation.outputs.subscriptionId
@@ -57,11 +54,38 @@ variable dnsRecord {
   })
 }
 
+variable managedIdentity {
+  type = object({
+    name              = string
+    resourceGroupName = string
+  })
+}
+
+variable keyVault {
+  type = object({
+    name              = string
+    resourceGroupName = string
+    secretName = object({
+      adminUsername = string
+      adminPassword = string
+    })
+  })
+}
+
+variable networkSecurityPerimeter {
+  type = object({
+    name               = string
+    profileName        = string
+    resourceGroupName  = string
+    resourceAccessMode = string
+  })
+}
+
 variable virtualNetwork {
   type = object({
     name              = string
     subnetName        = string
-    subnetNameNetApp  = string
+    subnetNameANF     = string
     resourceGroupName = string
     extendedZone = object({
       enable   = bool
@@ -92,10 +116,6 @@ variable activeDirectory {
   })
 }
 
-data http client_address {
-  url = "https://api.ipify.org?format=json"
-}
-
 data azurerm_subscription current {}
 
 data azurerm_client_config current {}
@@ -112,32 +132,37 @@ data terraform_remote_state foundation {
 }
 
 data azurerm_user_assigned_identity main {
-  name                = data.terraform_remote_state.foundation.outputs.managedIdentity.name
-  resource_group_name = data.terraform_remote_state.foundation.outputs.resourceGroup.name
+  name                = var.managedIdentity.name
+  resource_group_name = var.managedIdentity.resourceGroupName
 }
 
 data azurerm_key_vault main {
-  name                = data.terraform_remote_state.foundation.outputs.keyVault.name
-  resource_group_name = data.terraform_remote_state.foundation.outputs.resourceGroup.name
+  name                = var.keyVault.name
+  resource_group_name = var.keyVault.resourceGroupName
 }
 
 data azurerm_key_vault_secret admin_username {
-  name         = data.terraform_remote_state.foundation.outputs.keyVault.secretName.adminUsername
+  name         = var.keyVault.secretName.adminUsername
   key_vault_id = data.azurerm_key_vault.main.id
 }
 
 data azurerm_key_vault_secret admin_password {
-  name         = data.terraform_remote_state.foundation.outputs.keyVault.secretName.adminPassword
-  key_vault_id = data.azurerm_key_vault.main.id
-}
-
-data azurerm_key_vault_key data_encryption {
-  name         = data.terraform_remote_state.foundation.outputs.keyVault.keyName.dataEncryption
+  name         = var.keyVault.secretName.adminPassword
   key_vault_id = data.azurerm_key_vault.main.id
 }
 
 data azurerm_resource_group dns {
   name = var.virtualNetwork.privateDNS.resourceGroupName
+}
+
+data azurerm_network_security_perimeter main {
+  name                = var.networkSecurityPerimeter.name
+  resource_group_name = var.networkSecurityPerimeter.resourceGroupName
+}
+
+data azurerm_network_security_perimeter_profile main {
+  name                          = var.networkSecurityPerimeter.profileName
+  network_security_perimeter_id = data.azurerm_network_security_perimeter.main.id
 }
 
 data azurerm_virtual_network main {
@@ -178,35 +203,53 @@ resource azurerm_resource_group storage {
   }
 }
 
+resource azurerm_resource_group netapp_files {
+  count    = var.netAppFiles.enable ? 1 : 0
+  name     = "${var.resourceGroupName}.NetAppFiles"
+  location = data.azurerm_virtual_network.main.location
+  tags = {
+    Module = basename(path.cwd)
+  }
+}
+
+resource azurerm_resource_group lustre_files {
+  count    = var.lustreFiles.enable ? 1 : 0
+  name     = "${var.resourceGroupName}.LustreFiles"
+  location = data.azurerm_virtual_network.main.location
+  tags = {
+    Module = basename(path.cwd)
+  }
+}
+
 ############################################################################
 # Private DNS (https://learn.microsoft.com/azure/dns/private-dns-overview) #
 ############################################################################
 
-resource azurerm_private_dns_a_record netapp_src {
+resource azurerm_private_dns_a_record netapp_files {
   count               = var.netAppFiles.enable ? 1 : 0
-  name                = "${lower(var.dnsRecord.name)}-netapp-src"
+  name                = "${lower(var.dnsRecord.name)}-netappfiles"
   resource_group_name = var.virtualNetwork.privateDNS.resourceGroupName
   zone_name           = var.virtualNetwork.privateDNS.zoneName
   ttl                 = var.dnsRecord.ttlSeconds
   records = distinct([
-    for volume in azurerm_netapp_volume.main : volume.mount_ip_addresses[0] if volume.location == azurerm_resource_group.netapp[0].location
+    for volume in azurerm_netapp_volume.main : volume.mount_ip_addresses[0] if volume.location == azurerm_resource_group.netapp_files[0].location
   ])
 }
 
-resource azurerm_private_dns_a_record netapp_dst {
-  count               = var.netAppFiles.enable ? 1 : 0
-  name                = "${lower(var.dnsRecord.name)}-netapp-dst"
+resource azurerm_private_dns_a_record netapp_files_replication {
+  count               = var.netAppFiles.enable && length(local.anfVolumesReplication) > 0 ? 1 : 0
+  name                = "${lower(var.dnsRecord.name)}-netappfiles-replication"
   resource_group_name = var.virtualNetwork.privateDNS.resourceGroupName
   zone_name           = var.virtualNetwork.privateDNS.zoneName
   ttl                 = var.dnsRecord.ttlSeconds
   records = distinct([
-    for volume in azurerm_netapp_volume.main : volume.mount_ip_addresses[0] if volume.location != azurerm_resource_group.netapp[0].location
+    for volume in azurerm_netapp_volume.main : volume.mount_ip_addresses[0] if volume.location != azurerm_resource_group.netapp_files[0].location
   ])
 }
 
-resource azurerm_private_dns_a_record lustre {
-  count               = var.managedLustre.enable ? 1 : 0
-  name                = "${lower(var.dnsRecord.name)}-lustre"
+resource azurerm_private_dns_a_record lustre_files {
+  count               = var.lustreFiles.enable ? 1 : 0
+  name                = "${lower(var.dnsRecord.name)}-lustrefiles"
   resource_group_name = var.virtualNetwork.privateDNS.resourceGroupName
   zone_name           = var.virtualNetwork.privateDNS.zoneName
   ttl                 = var.dnsRecord.ttlSeconds
@@ -218,18 +261,16 @@ resource azurerm_private_dns_a_record lustre {
 output privateDNS {
   value = {
     netAppFiles = var.netAppFiles.enable ? {
-      source = {
-        fqdn    = azurerm_private_dns_a_record.netapp_src[0].fqdn
-        records = length(azurerm_private_dns_a_record.netapp_src[0].records) > 0 ? azurerm_private_dns_a_record.netapp_src[0].records : null
-      }
-      destination = {
-        fqdn    = azurerm_private_dns_a_record.netapp_dst[0].fqdn
-        records = length(azurerm_private_dns_a_record.netapp_dst[0].records) > 0 ? azurerm_private_dns_a_record.netapp_dst[0].records : null
-      }
+      fqdn    = azurerm_private_dns_a_record.netapp_files[0].fqdn
+      records = length(azurerm_private_dns_a_record.netapp_files[0].records) > 0 ? azurerm_private_dns_a_record.netapp_files[0].records : null
+      replication = length(local.anfVolumesReplication) > 0 ? {
+        fqdn    = azurerm_private_dns_a_record.netapp_files_replication[0].fqdn
+        records = length(azurerm_private_dns_a_record.netapp_files_replication[0].records) > 0 ? azurerm_private_dns_a_record.netapp_files_replication[0].records : null
+      } : null
     } : null
-    managedLustre = var.managedLustre.enable ? {
-      fqdn    = azurerm_private_dns_a_record.lustre[0].fqdn
-      records = length(azurerm_private_dns_a_record.lustre[0].records) > 0 ? azurerm_private_dns_a_record.lustre[0].records : null
+    lustreFiles = var.lustreFiles.enable ? {
+      fqdn    = azurerm_private_dns_a_record.lustre_files[0].fqdn
+      records = length(azurerm_private_dns_a_record.lustre_files[0].records) > 0 ? azurerm_private_dns_a_record.lustre_files[0].records : null
     } : null
   }
 }

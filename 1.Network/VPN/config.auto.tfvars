@@ -13,7 +13,9 @@ vpnGateway = {
   vpnType    = "RouteBased"
   generation = "Generation2"
   sharedKey  = ""
-  enableBgp  = false
+  bgp = {
+    enable = false
+  }
   pointToSite = {
     enable = false
     client = {
@@ -42,9 +44,9 @@ vpnGatewayLocal = {
   }
 }
 
-########################
-# Brownfield Resources #
-########################
+#########################
+# Dependency References #
+#########################
 
 virtualNetwork = { # https://learn.microsoft.com/azure/virtual-network/virtual-networks-overview
   name              = "HPC"

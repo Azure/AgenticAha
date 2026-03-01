@@ -30,11 +30,6 @@ activeDirectory = {
       userPassword = ""
     }
   }
-  network = {
-    acceleration = { # https://learn.microsoft.com/azure/virtual-network/accelerated-networking-overview
-      enable = true
-    }
-  }
 }
 
 activeDirectoryClient = {
@@ -62,16 +57,25 @@ activeDirectoryClient = {
       userPassword = ""
     }
   }
-  network = {
-    acceleration = { # https://learn.microsoft.com/azure/virtual-network/accelerated-networking-overview
-      enable = true
-    }
-  }
 }
 
-########################
-# Brownfield Resources #
-########################
+#########################
+# Dependency References #
+#########################
+
+managedIdentity = { # https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview
+  name              = "aihpc"
+  resourceGroupName = "HPC.Identity"
+}
+
+keyVault = { # https://learn.microsoft.com/azure/key-vault/general/overview
+  name              = "aihpc"
+  resourceGroupName = "HPC"
+  secretName = {
+    adminUsername = "adminUsername"
+    adminPassword = "adminPassword"
+  }
+}
 
 virtualNetwork = { # https://learn.microsoft.com/azure/virtual-network/virtual-networks-overview
   name              = "HPC"

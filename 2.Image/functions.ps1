@@ -11,24 +11,8 @@ Set-Location -Path $aaaRoot
 
 $fileSystemsMount = "$aaaRoot\fileSystems.bat"
 
-if ($imageBuildConfigEncoded -ne "") {
-  Write-Information "(AAA Start): Image Build Config"
-  $imageBuildConfigBytes = [System.Convert]::FromBase64String($imageBuildConfigEncoded)
-  $imageBuildConfig = [System.Text.Encoding]::UTF8.GetString($imageBuildConfigBytes) | ConvertFrom-Json
-  $blobStorage = $imageBuildConfig.blobStorage
-  $machineType = $imageBuildConfig.machineType
-  $gpuProvider = $imageBuildConfig.gpuProvider
-  $jobManagers = $imageBuildConfig.jobManagers
-  $jobProcessors = $imageBuildConfig.jobProcessors
-  $adminUsername = $imageBuildConfig.authCredential.adminUsername
-  $adminPassword = $imageBuildConfig.authCredential.adminPassword
-  $serviceUsername = $imageBuildConfig.authCredential.serviceUsername
-  $servicePassword = $imageBuildConfig.authCredential.servicePassword
-  Write-Information "(AAA End): Image Build Config"
-}
-
 function DownloadFile ($fileName, $fileLink, $authRequired) {
-  Add-Type -AssemblyName System.Net.Http
+  Add-Type -AssemblyName System.Net.Http, System.Web
   $httpClient = New-Object System.Net.Http.HttpClient
   if ($authRequired) {
     $authToken = Invoke-WebRequest -UseBasicParsing -Headers @{Metadata=$true} -Uri $blobStorage.authTokenUrl
@@ -48,7 +32,7 @@ function DownloadFile ($fileName, $fileLink, $authRequired) {
   }
 }
 
-function RunProcess ($filePath, $argumentList, $logFile) {
+function TryCommand ($filePath, $argumentList, $logFile) {
   try {
     if ($logFile) {
       $logFile = "$aaaRoot\$logFile"
@@ -70,7 +54,7 @@ function RunProcess ($filePath, $argumentList, $logFile) {
       }
     }
   } catch {
-    Write-Error "RunProcess Error: $_.Exception.Message"
+    Write-Error "TryCommand Error: $_.Exception.Message"
     Write-Error "FilePath: $filePath"
     Write-Error "ArgumentList: $argumentList"
     throw
@@ -98,7 +82,7 @@ function SetFileSystemMount ($fileSystemMount) {
 }
 
 function RegisterFileSystemMounts {
-  RunProcess $fileSystemsMount $null file-system-mount
+  TryCommand $fileSystemsMount $null file-system-mount
   $taskName = "AAA File System Mount"
   $taskTrigger = New-ScheduledTaskTrigger -AtStartup
   $taskAction = New-ScheduledTaskAction -Execute $fileSystemsMount

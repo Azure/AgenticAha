@@ -67,16 +67,19 @@ storageAccounts = [
 
 netAppFiles = {
   enable = true
-  name   = "ANF"
+  name   = "aihpc"
   kerberos = {
     enable = false
+  }
+  volumeDestruction = {
+    prevent = true
   }
   capacityPools = [
     {
       enable  = true
-      name    = "Flex"
+      name    = "flex"
       sizeTiB = 1
-      tpMiBps = 128
+      tpMiBps = 640
       coolAccess = {
         enable = true
         period = {
@@ -90,10 +93,10 @@ netAppFiles = {
       volumes = [
         {
           enable      = true
-          name        = "Shared"
+          name        = "shared"
           path        = "shared"
           sizeGiB     = 512
-          tpMiBps     = 32
+          tpMiBps     = 640
           permissions = 777
           kerberos = {
             enable = false
@@ -139,7 +142,7 @@ netAppFiles = {
   ]
   backup = {
     enable = false
-    name   = "ANF"
+    name   = "aihpc"
     policy = {
       enable = true
       name   = "Default"
@@ -152,11 +155,11 @@ netAppFiles = {
   }
 }
 
-##########################################################################################
-# Managed Lustre (https://learn.microsoft.com/azure/azure-managed-lustre/amlfs-overview) #
-##########################################################################################
+######################################################################################################
+# Managed Lustre File System (https://learn.microsoft.com/azure/azure-managed-lustre/amlfs-overview) #
+######################################################################################################
 
-managedLustre = {
+lustreFiles = {
   enable  = false
   name    = "aihpc"
   type    = "AMLFS-Durable-Premium-40" # https://learn.microsoft.com/azure/azure-managed-lustre/create-file-system-resource-manager#file-system-type-and-size-options
@@ -166,7 +169,7 @@ managedLustre = {
     accountName       = "aihpc1"
     resourceGroupName = "HPC.Storage"
     containerName = {
-      archive = "lustre"
+      archive = "lustre-archive"
       logging = "lustre-logging"
     }
     importPrefix = "/"
@@ -174,9 +177,6 @@ managedLustre = {
   maintenanceWindow = {
     dayOfWeek    = "Sunday"
     utcStartTime = "00:00"
-  }
-  encryption = {
-    enable = false
   }
 }
 
@@ -189,24 +189,35 @@ dnsRecord = {
   ttlSeconds = 300
 }
 
-###########################################################
-# Microsoft Discovery (https://aka.ms/MicrosoftDiscovery) #
-###########################################################
+#########################
+# Dependency References #
+#########################
 
-discovery = {
-  enable   = false
-  name     = "aihpc"
-  location = "EastUS"
+managedIdentity = { # https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview
+  name              = "aihpc"
+  resourceGroupName = "HPC.Identity"
 }
 
-########################
-# Brownfield Resources #
-########################
+keyVault = { # https://learn.microsoft.com/azure/key-vault/general/overview
+  name              = "aihpc"
+  resourceGroupName = "HPC"
+  secretName = {
+    adminUsername = "adminUsername"
+    adminPassword = "adminPassword"
+  }
+}
+
+networkSecurityPerimeter = { # https://learn.microsoft.com/azure/private-link/network-security-perimeter-concepts
+  name               = "aihpc"
+  profileName        = "default"
+  resourceGroupName  = "HPC.Network"
+  resourceAccessMode = "Enforced"
+}
 
 virtualNetwork = { # https://learn.microsoft.com/azure/virtual-network/virtual-networks-overview
   name              = "HPC"
   subnetName        = "Storage"
-  subnetNameNetApp  = "StorageNetApp"
+  subnetNameANF     = "StorageANF"
   resourceGroupName = "HPC.Network.SouthCentralUS"
   extendedZone = {
     enable   = false

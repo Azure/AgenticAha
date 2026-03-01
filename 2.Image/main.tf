@@ -6,11 +6,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~>4.57.0"
-    }
-    http = {
-      source  = "hashicorp/http"
-      version = "~>3.5.0"
+      version = "~>4.62.0"
     }
     time = {
       source  = "hashicorp/time"
@@ -64,9 +60,21 @@ variable image {
   })
 }
 
-variable hpAnyware {
+variable managedIdentity {
   type = object({
-    authId = string
+    name              = string
+    resourceGroupName = string
+  })
+}
+
+variable keyVault {
+  type = object({
+    name              = string
+    resourceGroupName = string
+    secretName = object({
+      adminUsername = string
+      adminPassword = string
+    })
   })
 }
 
@@ -88,33 +96,8 @@ data terraform_remote_state foundation {
 }
 
 data azurerm_user_assigned_identity main {
-  name                = data.terraform_remote_state.foundation.outputs.managedIdentity.name
-  resource_group_name = data.terraform_remote_state.foundation.outputs.resourceGroup.name
-}
-
-data azurerm_key_vault main {
-  name                = data.terraform_remote_state.foundation.outputs.keyVault.name
-  resource_group_name = data.terraform_remote_state.foundation.outputs.resourceGroup.name
-}
-
-data azurerm_key_vault_secret admin_username {
-  name         = data.terraform_remote_state.foundation.outputs.keyVault.secretName.adminUsername
-  key_vault_id = data.azurerm_key_vault.main.id
-}
-
-data azurerm_key_vault_secret admin_password {
-  name         = data.terraform_remote_state.foundation.outputs.keyVault.secretName.adminPassword
-  key_vault_id = data.azurerm_key_vault.main.id
-}
-
-data azurerm_key_vault_secret service_username {
-  name         = data.terraform_remote_state.foundation.outputs.keyVault.secretName.serviceUsername
-  key_vault_id = data.azurerm_key_vault.main.id
-}
-
-data azurerm_key_vault_secret service_password {
-  name         = data.terraform_remote_state.foundation.outputs.keyVault.secretName.servicePassword
-  key_vault_id = data.azurerm_key_vault.main.id
+  name                = var.managedIdentity.name
+  resource_group_name = var.managedIdentity.resourceGroupName
 }
 
 data azurerm_virtual_network main {
@@ -126,14 +109,6 @@ data azurerm_subnet main {
   name                 = var.virtualNetwork.subnetName
   resource_group_name  = data.azurerm_virtual_network.main.resource_group_name
   virtual_network_name = data.azurerm_virtual_network.main.name
-}
-
-resource azurerm_resource_group image {
-  name     = var.resourceGroupName
-  location = data.azurerm_virtual_network.main.location
-  tags = {
-    Module = basename(path.cwd)
-  }
 }
 
 resource azurerm_resource_group image_builder {

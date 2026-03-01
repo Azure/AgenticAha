@@ -1,30 +1,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-subscriptionId  = "" # REQUIRED
-defaultLocation = "SouthCentralUS" # Set from "az account list-locations --query [].name"
-
-#######################################################
-# Storage (https://learn.microsoft.com/azure/storage) #
-#######################################################
-
-storage = {
-  account = {
-    type        = "StorageV2" # https://learn.microsoft.com/azure/storage/common/storage-account-overview
-    redundancy  = "LRS"       # https://learn.microsoft.com/azure/storage/common/storage-redundancy
-    performance = "Standard"
-  }
-  encryption = {
-    infrastructure = {
-      enable = true
-    }
-    service = {
-      customKey = {
-        enable = false
-      }
-    }
-  }
-}
+subscriptionId = "" # REQUIRED
+hubRegion      = "SouthCentralUS" # Set from "az account list-locations --query [].name"
 
 #############################################################################################################
 # Managed Identity (https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview) #
@@ -44,10 +22,10 @@ keyVault = {
   enableForDeployment         = true
   enableForDiskEncryption     = true
   enableForTemplateDeployment = true
-  enableTrustedServices       = true
   enablePurgeProtection       = false
   utcExpirationDateTime       = "2099-12-31T23:59:59Z"
   softDeleteRetentionDays     = 90
+  sshKeySizeBits              = 2048
   secrets = [
     {
       name  = "AdminUsername"
@@ -56,33 +34,20 @@ keyVault = {
     {
       name  = "AdminPassword"
       value = "P@ssword123456"
-    },
-    {
-      name  = "ServiceUsername"
-      value = "hpcservice"
-    },
-    {
-      name  = "ServicePassword"
-      value = "P@ssword123456"
     }
   ]
-  keys = [
-    {
-      name = "DataEncryption"
-      type = "RSA"
-      size = 4096
-      operations = [
-        "decrypt",
-        "encrypt",
-        "sign",
-        "unwrapKey",
-        "verify",
-        "wrapKey"
-      ]
-    }
-  ]
-  certificates = [
-  ]
+}
+
+#######################################################
+# Storage (https://learn.microsoft.com/azure/storage) #
+#######################################################
+
+storage = {
+  account = {
+    type        = "StorageV2" # https://learn.microsoft.com/azure/storage/common/storage-account-overview
+    redundancy  = "LRS"       # https://learn.microsoft.com/azure/storage/common/storage-redundancy
+    performance = "Standard"
+  }
 }
 
 ######################################################################
@@ -91,15 +56,10 @@ keyVault = {
 
 monitor = {
   name = "aihpc"
-  logAnalytics = {
-    workspace = {
+  workspace = {
+    logAnalytics = {
       tier = "PerGB2018"
     }
-  }
-  applicationInsights = {
-    type = "web"
-  }
-  monitorWorkspace = {
     ingestAlert = {
       enable    = false
       name      = "Monitor Workspace Ingest"
@@ -107,9 +67,12 @@ monitor = {
       threshold = 90 # Percent
     }
   }
+  appInsights = {
+    type = "web"
+  }
   grafanaDashboard = {
     tier    = "Standard"
-    version = 11
+    version = 12
   }
   dataRetention = {
     days = 90
@@ -122,6 +85,6 @@ monitor = {
 
 policy = {
   denyPasswordAuthLinux = {
-    enable = true
+    enable = false
   }
 }

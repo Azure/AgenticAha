@@ -1,11 +1,11 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-#########################################################
-# Purview (https://learn.microsoft.com/purview/purview) #
-#########################################################
+###################################################################
+# Microsoft Purview (https://learn.microsoft.com/purview/purview) #
+###################################################################
 
-variable purview {
+variable msPurview {
   type = object({
     enable = bool
     name   = string
@@ -13,8 +13,8 @@ variable purview {
 }
 
 resource azurerm_purview_account main {
-  count                       = var.purview.enable ? 1 : 0
-  name                        = var.purview.name
+  count                       = var.msPurview.enable ? 1 : 0
+  name                        = var.msPurview.name
   resource_group_name         = azurerm_resource_group.data.name
   location                    = azurerm_resource_group.data.location
   managed_resource_group_name = "${azurerm_resource_group.data.name}.Managed"
@@ -27,13 +27,13 @@ resource azurerm_purview_account main {
 }
 
 resource azurerm_private_dns_zone purview {
-  count               = var.purview.enable ? 1 : 0
+  count               = var.msPurview.enable ? 1 : 0
   name                = "privatelink.purview.azure.com"
   resource_group_name = azurerm_resource_group.data.name
 }
 
 resource azurerm_private_dns_zone_virtual_network_link purview {
-  count                 = var.purview.enable ? 1 : 0
+  count                 = var.msPurview.enable ? 1 : 0
   name                  = "purview"
   resource_group_name   = azurerm_private_dns_zone.purview[0].resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.purview[0].name
@@ -41,7 +41,7 @@ resource azurerm_private_dns_zone_virtual_network_link purview {
 }
 
 resource azurerm_private_endpoint purview {
-  count               = var.purview.enable ? 1 : 0
+  count               = var.msPurview.enable ? 1 : 0
   name                = "${azurerm_purview_account.main[0].name}-${azurerm_private_dns_zone_virtual_network_link.purview[0].name}"
   resource_group_name = azurerm_resource_group.data.name
   location            = azurerm_resource_group.data.location
@@ -62,8 +62,8 @@ resource azurerm_private_endpoint purview {
   }
 }
 
-output purview {
-  value = var.purview.enable ? {
+output msPurview {
+  value = var.msPurview.enable ? {
     id = azurerm_purview_account.main[0].id
   } : null
 }

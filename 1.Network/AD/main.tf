@@ -6,7 +6,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~>4.57.0"
+      version = "~>4.62.0"
     }
   }
   backend azurerm {
@@ -17,6 +17,11 @@ terraform {
 
 provider azurerm {
   features {
+    virtual_machine {
+      delete_os_disk_on_deletion            = true
+      skip_shutdown_and_force_delete        = false
+      detach_implicit_data_disk_on_deletion = false
+    }
   }
   subscription_id     = data.terraform_remote_state.foundation.outputs.subscriptionId
   storage_use_azuread = true
@@ -24,6 +29,24 @@ provider azurerm {
 
 variable resourceGroupName {
   type = string
+}
+
+variable managedIdentity {
+  type = object({
+    name              = string
+    resourceGroupName = string
+  })
+}
+
+variable keyVault {
+  type = object({
+    name              = string
+    resourceGroupName = string
+    secretName = object({
+      adminUsername = string
+      adminPassword = string
+    })
+  })
 }
 
 variable virtualNetwork {
@@ -42,27 +65,22 @@ data terraform_remote_state foundation {
 }
 
 data azurerm_user_assigned_identity main {
-  name                = data.terraform_remote_state.foundation.outputs.managedIdentity.name
-  resource_group_name = data.terraform_remote_state.foundation.outputs.resourceGroup.name
+  name                = var.managedIdentity.name
+  resource_group_name = var.managedIdentity.resourceGroupName
 }
 
 data azurerm_key_vault main {
-  name                = data.terraform_remote_state.foundation.outputs.keyVault.name
-  resource_group_name = data.terraform_remote_state.foundation.outputs.resourceGroup.name
+  name                = var.keyVault.name
+  resource_group_name = var.keyVault.resourceGroupName
 }
 
 data azurerm_key_vault_secret admin_username {
-  name         = data.terraform_remote_state.foundation.outputs.keyVault.secretName.adminUsername
+  name         = var.keyVault.secretName.adminUsername
   key_vault_id = data.azurerm_key_vault.main.id
 }
 
 data azurerm_key_vault_secret admin_password {
-  name         = data.terraform_remote_state.foundation.outputs.keyVault.secretName.adminPassword
-  key_vault_id = data.azurerm_key_vault.main.id
-}
-
-data azurerm_key_vault_secret ssh_key_public {
-  name         = data.terraform_remote_state.foundation.outputs.keyVault.secretName.sshKeyPublic
+  name         = var.keyVault.secretName.adminPassword
   key_vault_id = data.azurerm_key_vault.main.id
 }
 

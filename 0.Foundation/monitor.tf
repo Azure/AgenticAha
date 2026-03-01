@@ -8,21 +8,19 @@
 variable monitor {
   type = object({
     name = string
-    logAnalytics = object({
-      workspace = object({
+    workspace = object({
+      logAnalytics = object({
         tier = string
       })
-    })
-    applicationInsights = object({
-      type = string
-    })
-    monitorWorkspace = object({
       ingestAlert = object({
         enable    = bool
         name      = string
         severity  = number
         threshold = number
       })
+    })
+    appInsights = object({
+      type = string
     })
     grafanaDashboard = object({
       tier    = string
@@ -62,7 +60,7 @@ resource azurerm_log_analytics_workspace main {
   name                       = var.monitor.name
   resource_group_name        = azurerm_resource_group.foundation_monitor.name
   location                   = azurerm_resource_group.foundation_monitor.location
-  sku                        = var.monitor.logAnalytics.workspace.tier
+  sku                        = var.monitor.workspace.logAnalytics.tier
   retention_in_days          = var.monitor.dataRetention.days
   internet_ingestion_enabled = false
   internet_query_enabled     = false
@@ -72,17 +70,6 @@ resource azurerm_log_analytics_workspace main {
       azurerm_user_assigned_identity.main.id
     ]
   }
-}
-
-resource azurerm_application_insights main {
-  name                       = var.monitor.name
-  resource_group_name        = azurerm_resource_group.foundation_monitor.name
-  location                   = azurerm_resource_group.foundation_monitor.location
-  workspace_id               = azurerm_log_analytics_workspace.main.id
-  application_type           = var.monitor.applicationInsights.type
-  retention_in_days          = var.monitor.dataRetention.days
-  internet_ingestion_enabled = false
-  internet_query_enabled     = false
 }
 
 resource azurerm_monitor_workspace main {
@@ -104,10 +91,10 @@ resource azurerm_monitor_action_group main {
 }
 
 resource azurerm_monitor_metric_alert workspace_ingest {
-  count               = var.monitor.monitorWorkspace.ingestAlert.enable ? 1 : 0
-  name                = var.monitor.monitorWorkspace.ingestAlert.name
+  count               = var.monitor.workspace.ingestAlert.enable ? 1 : 0
+  name                = var.monitor.workspace.ingestAlert.name
   resource_group_name = azurerm_resource_group.foundation_monitor.name
-  severity            = var.monitor.monitorWorkspace.ingestAlert.severity
+  severity            = var.monitor.workspace.ingestAlert.severity
   scopes = [
     azurerm_monitor_workspace.main.id
   ]
@@ -116,11 +103,22 @@ resource azurerm_monitor_metric_alert workspace_ingest {
     metric_name      = "ActiveTimeSeriesPercentUtilization"
     aggregation      = "Average"
     operator         = "GreaterThanOrEqual"
-    threshold        = var.monitor.monitorWorkspace.ingestAlert.threshold
+    threshold        = var.monitor.workspace.ingestAlert.threshold
   }
   action {
     action_group_id = azurerm_monitor_action_group.main.id
   }
+}
+
+resource azurerm_application_insights main {
+  name                       = var.monitor.name
+  resource_group_name        = azurerm_resource_group.foundation_monitor.name
+  location                   = azurerm_resource_group.foundation_monitor.location
+  workspace_id               = azurerm_log_analytics_workspace.main.id
+  application_type           = var.monitor.appInsights.type
+  retention_in_days          = var.monitor.dataRetention.days
+  internet_ingestion_enabled = false
+  internet_query_enabled     = false
 }
 
 resource azurerm_dashboard_grafana main {
@@ -138,27 +136,5 @@ resource azurerm_dashboard_grafana main {
   }
   azure_monitor_workspace_integrations {
     resource_id = azurerm_monitor_workspace.main.id
-  }
-}
-
-output monitor {
-  value = {
-    resourceGroup = {
-      name     = azurerm_resource_group.foundation_monitor.name
-      location = azurerm_resource_group.foundation_monitor.location
-    }
-    logAnalytics = {
-      id = azurerm_log_analytics_workspace.main.id
-    }
-    applicationInsights = {
-      id   = azurerm_application_insights.main.id
-      name = azurerm_application_insights.main.name
-    }
-    workspace = {
-      name = azurerm_monitor_workspace.main.name
-      grafanaDashboard = {
-        name = azurerm_dashboard_grafana.main.name
-      }
-    }
   }
 }

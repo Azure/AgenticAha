@@ -6,11 +6,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~>4.57.0"
-    }
-    azapi = {
-      source  = "azure/azapi"
-      version = "~>2.8.0"
+      version = "~>4.62.0"
     }
   }
   backend azurerm {
@@ -21,13 +17,37 @@ terraform {
 
 provider azurerm {
   features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
     netapp {
-      prevent_volume_destruction             = false
+      prevent_volume_destruction             = var.netAppFiles.volumeDestruction.prevent
       delete_backups_on_backup_vault_destroy = true
+    }
+    template_deployment {
+      delete_nested_items_during_deletion = true
     }
   }
   subscription_id     = data.terraform_remote_state.foundation.outputs.subscriptionId
   storage_use_azuread = true
+}
+
+variable managedIdentity {
+  type = object({
+    name              = string
+    resourceGroupName = string
+  })
+}
+
+variable keyVault {
+  type = object({
+    name              = string
+    resourceGroupName = string
+    secretName = object({
+      adminUsername = string
+      adminPassword = string
+    })
+  })
 }
 
 variable virtualNetworkStorage {
@@ -35,6 +55,7 @@ variable virtualNetworkStorage {
     name              = string
     subnetName        = string
     resourceGroupName = string
+    securityGroupName = string
   })
 }
 
@@ -46,13 +67,7 @@ variable virtualNetworkCache {
   })
 }
 
-variable netAppFiles {
-  type = object({
-    accountName       = string
-    capacityPoolName  = string
-    resourceGroupName = string
-  })
-}
+data azurerm_subscription current {}
 
 data terraform_remote_state foundation {
   backend = "local"
@@ -62,8 +77,23 @@ data terraform_remote_state foundation {
 }
 
 data azurerm_user_assigned_identity main {
-  name                = data.terraform_remote_state.foundation.outputs.managedIdentity.name
-  resource_group_name = data.terraform_remote_state.foundation.outputs.resourceGroup.name
+  name                = var.managedIdentity.name
+  resource_group_name = var.managedIdentity.resourceGroupName
+}
+
+data azurerm_key_vault main {
+  name                = var.keyVault.name
+  resource_group_name = var.keyVault.resourceGroupName
+}
+
+data azurerm_key_vault_secret admin_username {
+  name         = var.keyVault.secretName.adminUsername
+  key_vault_id = data.azurerm_key_vault.main.id
+}
+
+data azurerm_key_vault_secret admin_password {
+  name         = var.keyVault.secretName.adminPassword
+  key_vault_id = data.azurerm_key_vault.main.id
 }
 
 data azurerm_virtual_network storage {
@@ -86,6 +116,11 @@ data azurerm_subnet cache {
   name                 = var.virtualNetworkCache.subnetName
   resource_group_name  = data.azurerm_virtual_network.cache.resource_group_name
   virtual_network_name = data.azurerm_virtual_network.cache.name
+}
+
+data azurerm_network_security_group storage {
+  name                = var.virtualNetworkStorage.securityGroupName
+  resource_group_name = data.azurerm_virtual_network.storage.resource_group_name
 }
 
 data azurerm_resource_group cache {

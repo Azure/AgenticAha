@@ -6,11 +6,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~>4.57.0"
-    }
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "~>3.7.0"
+      version = "~>4.62.0"
     }
     http = {
       source  = "hashicorp/http"
@@ -38,6 +34,24 @@ variable resourceGroupName {
   type = string
 }
 
+variable managedIdentity {
+  type = object({
+    name              = string
+    resourceGroupName = string
+  })
+}
+
+variable keyVault {
+  type = object({
+    name              = string
+    resourceGroupName = string
+    secretName = object({
+      adminUsername = string
+      adminPassword = string
+    })
+  })
+}
+
 variable virtualNetwork {
   type = object({
     name              = string
@@ -53,12 +67,6 @@ data http client_address {
   url = "https://api.ipify.org?format=json"
 }
 
-data azurerm_client_config current {}
-
-data azuread_user current {
-  object_id = data.azurerm_client_config.current.object_id
-}
-
 data terraform_remote_state foundation {
   backend = "local"
   config = {
@@ -67,22 +75,22 @@ data terraform_remote_state foundation {
 }
 
 data azurerm_user_assigned_identity main {
-  name                = data.terraform_remote_state.foundation.outputs.managedIdentity.name
-  resource_group_name = data.terraform_remote_state.foundation.outputs.resourceGroup.name
+  name                = var.managedIdentity.name
+  resource_group_name = var.managedIdentity.resourceGroupName
 }
 
 data azurerm_key_vault main {
-  name                = data.terraform_remote_state.foundation.outputs.keyVault.name
-  resource_group_name = data.terraform_remote_state.foundation.outputs.resourceGroup.name
+  name                = var.keyVault.name
+  resource_group_name = var.keyVault.resourceGroupName
 }
 
 data azurerm_key_vault_secret admin_username {
-  name         = data.terraform_remote_state.foundation.outputs.keyVault.secretName.adminUsername
+  name         = var.keyVault.secretName.adminUsername
   key_vault_id = data.azurerm_key_vault.main.id
 }
 
 data azurerm_key_vault_secret admin_password {
-  name         = data.terraform_remote_state.foundation.outputs.keyVault.secretName.adminPassword
+  name         = var.keyVault.secretName.adminPassword
   key_vault_id = data.azurerm_key_vault.main.id
 }
 
@@ -107,24 +115,6 @@ data azurerm_subnet data_mysql {
 resource azurerm_resource_group data {
   name     = var.resourceGroupName
   location = data.azurerm_virtual_network.main.location
-  tags = {
-    Module = basename(path.cwd)
-  }
-}
-
-resource azurerm_resource_group data_sql {
-  count    = var.mySQL.enable ? 1 : 0
-  name     = "${var.resourceGroupName}.SQL"
-  location = azurerm_resource_group.data.location
-  tags = {
-    Module = basename(path.cwd)
-  }
-}
-
-resource azurerm_resource_group data_fabric {
-  count    = var.fabric.enable ? 1 : 0
-  name     = "${var.resourceGroupName}.Fabric"
-  location = azurerm_resource_group.data.location
   tags = {
     Module = basename(path.cwd)
   }

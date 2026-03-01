@@ -30,9 +30,6 @@ variable containerRegistry {
     adminUser = object({
       enable = bool
     })
-    encryption = object({
-      enable = bool
-    })
     retentionPolicy = object({
       enable = bool
       days   = number
@@ -123,13 +120,6 @@ resource azurerm_container_registry main {
           ip_range = ip_rule.value.ipRange
         }
       }
-    }
-  }
-  dynamic encryption {
-    for_each = var.containerRegistry.encryption.enable ? [1] : []
-    content {
-      key_vault_key_id   = azurerm_key_vault_key.main[data.terraform_remote_state.foundation.outputs.keyVault.keyName.dataEncryption].id
-      identity_client_id = azurerm_user_assigned_identity.main.client_id
     }
   }
   dynamic georeplications {

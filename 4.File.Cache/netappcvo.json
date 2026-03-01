@@ -1,0 +1,1672 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "bootDiagStorageAccountName": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "Name of the boot diagnostics storage account, this is where serial log files are stored."
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for the Virtual Machine."
+            }
+        },
+        "pageblobStorageAccountName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Name of the page blob storage account."
+            }
+        },
+        "pageblobStorageAccountK": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Key of the page blob storage account."
+            }
+        },
+        "pageblobStorageAccountIp": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "IP address of the page blob storage account."
+            }
+        },
+        "pageblobStorageAccountContainerName": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Name of the PLRS storage account where VM root volume pageblobs will reside."
+            }
+        },
+        "instanceType": {
+            "type": "string",
+            "metadata": {
+                "description": "Size of the VM."
+            }
+        },
+        "subnetId": {
+            "type": "string",
+            "metadata": {
+                "description": "Resource Id of the Subnet to use with this ONTAP Cloud instance"
+            }
+        },
+        "networkSecurityGroupId": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Resource Id of the Network Security Group to use for this ONTAP Cloud instance"
+            }
+        },
+        "instanceName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Base Name for the Virtual Machines in the Resource Group."
+            }
+        },
+        "vm1PlatformSerialNumber": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Platform Serial Number to use on Node 1."
+            }
+        },
+        "vm2PlatformSerialNumber": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Platform Serial Number to use on Node 2."
+            }
+        },
+        "subnetGatewayIp": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The gateway IP address for the vnet's subnet."
+            }
+        },
+        "subnetMask": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The network mask for the subnet, e.g. 255.255.254.0."
+            }
+        },
+        "enableSriov": {
+            "type": "string",
+            "defaultValue": "true",
+            "allowedValues": [
+                "true",
+                "false"
+            ],
+            "metadata": {
+                "description": "Enable Accelerated Networking."
+            }
+        },
+        "coreDiskSize": {
+            "type": "int",
+            "defaultValue": 1024,
+            "metadata": {
+                "description": "The size of the coredisk in GB, minimum of 1024GB allowed."
+            }
+        },
+        "marketplaceOffer": {
+            "type": "string",
+            "defaultValue": "netapp-ontap-cloud",
+            "metadata": {
+                "description": "Azure Marketplace Offer for the ONTAP Cloud image to deploy."
+            }
+        },
+        "marketplaceSKU": {
+            "type": "string",
+            "defaultValue": "ontap_cloud_pgo_ha",
+            "metadata": {
+                "description": "Azure Marketplace SKU for the ONTAP Cloud image to deploy."
+            }
+        },
+        "marketplaceVersion": {
+            "type": "string",
+            "defaultValue": "latest",
+            "metadata": {
+                "description": "Azure Marketplace Version for the ONTAP Cloud image to deploy."
+            }
+        },
+        "blobUrl": {
+            "type": "string",
+            "defaultValue": "blob.core.windows.net",
+            "metadata": {
+                "description": "Blob url for diagnostics, different for various clouds, e.g. AzureGov."
+            }
+        },
+        "secureTransferRequired": {
+            "type": "string",
+            "metadata": {
+                "description": "Enable HTTPS or HTTP protocol in the Storage Account."
+            },
+            "defaultValue": "false",
+            "allowedValues": [
+                "true",
+                "false"
+            ]
+        },
+        "vhdUri": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Vhd source if not deploying from the marketplace"
+            }
+        },
+        "galleryName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Shared Image Gallery containing CVO Images"
+            }
+        },
+        "galleryImageDefinitionName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Image Definition"
+            }
+        },
+        "galleryImageVersionName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Image Version"
+            }
+        },
+        "gallerySubscriptionID": {
+            "type": "string",
+            "defaultValue": "11111111-1111-1111-1111-111111111111",
+            "metadata": {
+                "description": "Subscription ID containing SIG, defaulted to a dummy string to pass template validation"
+            }
+        },
+        "galleryResourceGroup": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Resource Group hosting SIG"
+            }
+        },
+        "imageSource": {
+            "type": "string",
+            "defaultValue": "marketplace",
+            "allowedValues": [
+                "marketplace",
+                "vhd",
+                "sharedImageGallery"
+            ],
+            "metadata": {
+                "description": "CVO Image Source"
+            }
+        },
+        "vm1Zone": {
+            "type": "string",
+            "defaultValue": "",
+            "allowedValues": [
+                "",
+                "1",
+                "2",
+                "3"
+            ],
+            "metadata": {
+                "description": "Zone for VM1"
+            }
+        },
+        "vm2Zone": {
+            "type": "string",
+            "defaultValue": "",
+            "allowedValues": [
+                "",
+                "1",
+                "2",
+                "3"
+            ],
+            "metadata": {
+                "description": "Zone for VM2"
+            }
+        },
+        "sharedHaType": {
+            "type": "string",
+            "defaultValue": "pageblob",
+            "allowedValues": [
+                "pageblob",
+                "zrs",
+                "lrs"
+            ],
+            "metadata": {
+                "description": "Shared HA type in Azure"
+            }
+        },
+        "diskEncryptionSet": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Allows for use of customer managed keys on system and data disks"
+            }
+        },
+        "nvLogMediaType": {
+            "type": "string",
+            "defaultValue": "persistent-disk",
+            "allowedValues": [
+                "persistent-disk",
+                "ephemeral-memory"
+            ],
+            "metadata": {
+                "description": "Media used for NVlogs or Journaling"
+            }
+        },
+        "premiumSSDv2NvramDiskSizeInGB": {
+            "type": "string",
+            "defaultValue": "32",
+            "metadata": {
+                "description": "Disk size for NVRAM Premium SSD v2 disk"
+            }
+        },
+        "premiumSSDv2NvramDiskIOPSReadWrite": {
+            "type": "string",
+            "defaultValue": "16000",
+            "metadata": {
+                "description": "IOPS for NVRAM Premium SSD v2 disk"
+            }
+        },
+        "premiumSSDv2NvramDiskMBpsReadWrite": {
+            "type": "string",
+            "defaultValue": "1200",
+            "metadata": {
+                "description": "MBps for NVRAM Premium SSD v2 disk"
+            }
+        },
+        "hyperVGeneration": {
+            "type": "string",
+            "defaultValue": "V1",
+            "allowedValues": [
+                "V1",
+                "V2"
+            ],
+            "metadata": {
+                "description": "Use V1 or V2 as hyperV Generation."
+            }
+        },
+        "diskControllerType": {
+            "type": "string",
+            "defaultValue": "NVMe",
+            "allowedValues": [
+                "NVMe",
+                "SCSI"
+            ],
+            "metadata": {
+                "description": "Use NVMe or SCSI as Disk Controller Type."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Region in which this solution is deployed."
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "defaultValue": "adminuser",
+            "metadata": {
+                "description": "Admin username"
+            }
+        },
+        "zoneRedundantFIP": {
+            "type": "string",
+            "metadata": {
+                "description": "When set to true (Zone-Redundant), frontend's IP address is served simultaneously by multiple independent infrastructure deployments in multiple availability zones (Zone 1,2,3); when set to false (Non-Zonal), this option does not give a guarantee of redundancy"
+            },
+            "defaultValue": "false",
+            "allowedValues": [
+                "true",
+                "false"
+            ]
+        },
+        "tcpReset": {
+            "type": "string",
+            "metadata": {
+                "description": "When set, NFS outages for unplanned events will be shorter. The Azure feature enableHighAvailability must be registered on the subscription."
+            },
+            "defaultValue": "false",
+            "allowedValues": [
+                "true",
+                "false"
+            ]
+        },
+        "dataDiskSizeInGB": {
+            "type": "int",
+            "defaultValue": 500,
+            "metadata": {
+                "description": "Size of the data disks in GB"
+            }
+        },
+        "subnetAddressPrefix": {
+            "type": "string",
+            "defaultValue": "0",
+            "metadata": {
+                "description": "Address prefix of subnet selected."
+            }
+        },
+        "resourceTags": {
+            "type": "object",
+            "defaultValue": {
+                "DeployedBySelfSetup": "true"
+            }
+        },
+        "userBootargs": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "vnetNewOrExisting": {
+            "type": "string",
+            "defaultValue": "existing",
+            "metadata": {
+                "description": "Either create a new VNET or use existing."
+            }
+        },
+        "vnetName": {
+            "type": "string",
+            "defaultValue": "someVnet",
+            "metadata": {
+                "description": "VNET name if creating new."
+            }
+        },
+        "vnetAddressPrefixes": {
+            "type": "array",
+            "defaultValue": [],
+            "metadata": {
+                "description": "VNET Address prefixes if creating new."
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Subnet Name if creating new."
+            }
+        }
+    },
+    "variables": {
+        "loadBalancerName": "[concat(resourceGroup().name, '-lb')]",
+        "loadBalancerID": "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
+        "backendPoolID": "[concat(variables('loadBalancerID'),'/backendAddressPools/backendPool')]",
+        "vm1Name": "[concat(parameters('instanceName'),'-vm1')]",
+        "vm2Name": "[concat(parameters('instanceName'),'-vm2')]",
+        "pageblobContainerName": "[if(equals(parameters('sharedHaType'),'pageblob'), parameters('pageblobStorageAccountContainerName'), '')]",
+        "pageblobStorageAccountKeyMod": "[if(equals(parameters('sharedHaType'),'pageblob'), replace(parameters('pageblobStorageAccountK'),'=','#'), '')]",
+        "pageblobStorageAccountFQDN": "[if(equals(parameters('sharedHaType'),'pageblob'), concat(parameters('pageblobStorageAccountName'), '.', parameters('blobUrl')), '')]",
+        "minCoreDiskSizeInGB": 1024,
+        "plrsNvramDiskSizeInGB": "512",
+        "coreDiskSizeInGB": "[if(less(parameters('coreDiskSize'),variables('minCoreDiskSizeInGB')),variables('minCoreDiskSizeInGB'),parameters('coreDiskSize'))]",
+        "pageblobSAPort": "[if(equals(parameters('sharedHaType'),'pageblob'), if(equals(toLower(parameters('secureTransferRequired')),'true'), '443', '80'), '')]",
+        "clusterMgmtProbePort": 63001,
+        "imageDepends": "[if(equals(parameters('imageSource'),'vhd'), resourceId('Microsoft.Compute/images',concat(resourceGroup().name,'-image')), resourceId('Microsoft.Compute/disks',concat(variables('vm1Name'),'-disk-core')))]",
+        "vm1Depends": "[if(not(equals(parameters('sharedHaType'),'pageblob')), resourceId('Microsoft.Compute/virtualMachines',variables('vm1Name')), resourceId('Microsoft.Compute/disks',concat(variables('vm1Name'),'-disk-core')))]",
+        "vm2Depends": "[if(not(equals(parameters('sharedHaType'),'pageblob')), resourceId('Microsoft.Compute/virtualMachines',variables('vm2Name')), resourceId('Microsoft.Compute/disks',concat(variables('vm2Name'),'-disk-core')))]",
+        "root1Depends": "[if(not(equals(parameters('sharedHaType'),'pageblob')), resourceId('Microsoft.Compute/disks',concat(variables('vm1Name'),'-disk-root')), resourceId('Microsoft.Compute/disks',concat(variables('vm1Name'),'-disk-core')))]",
+        "root2Depends": "[if(not(equals(parameters('sharedHaType'),'pageblob')), resourceId('Microsoft.Compute/disks',concat(variables('vm2Name'),'-disk-root')), resourceId('Microsoft.Compute/disks',concat(variables('vm2Name'),'-disk-core')))]",
+        "vm1Nic3Depends": "[if(equals(parameters('sharedHaType'),'pageblob'), resourceId('Microsoft.Network/networkInterfaces',concat(variables('vm1Name'),'-nic3')), resourceId('Microsoft.Compute/disks',concat(variables('vm1Name'),'-disk-core')))]",
+        "vm2Nic3Depends": "[if(equals(parameters('sharedHaType'),'pageblob'), resourceId('Microsoft.Network/networkInterfaces',concat(variables('vm2Name'),'-nic3')), resourceId('Microsoft.Compute/disks',concat(variables('vm2Name'),'-disk-core')))]",
+        "plan": {
+            "name": "[parameters('marketplaceSKU')]",
+            "publisher": "netapp",
+            "product": "[parameters('marketplaceOffer')]"
+        },
+        "planVar": "[if(equals(parameters('imageSource'),'marketplace'), variables('plan'), json('null'))]",
+        "imageRef": {
+            "marketplace": {
+                "publisher": "netapp",
+                "offer": "[parameters('marketplaceOffer')]",
+                "sku": "[parameters('marketplaceSKU')]",
+                "version": "[parameters('marketplaceVersion')]"
+            },
+            "vhd": {
+                "id": "[resourceId('Microsoft.Compute/images',concat(resourceGroup().name,'-image'))]"
+            },
+            "sharedImageGallery": {
+                "id": "[resourceId(parameters('gallerySubscriptionID'),parameters('galleryResourceGroup'),'Microsoft.Compute/galleries/images/versions', parameters('galleryName'), parameters('galleryImageDefinitionName'), parameters('galleryImageVersionName'))]"
+            }
+        },
+        "rootDiskSizeInGB": "512",
+        "vm1Zone": "[if(not(empty(parameters('vm1Zone'))), createArray(parameters('vm1Zone')), json('null'))]",
+        "vm2Zone": "[if(not(empty(parameters('vm2Zone'))), createArray(parameters('vm2Zone')), json('null'))]",
+        "zoneNull": "[or(empty(parameters('vm1Zone')), empty(parameters('vm2Zone')))]",
+        "singleAZ": "[and(equals(parameters('sharedHaType'), 'lrs'), not(variables('zoneNull')))]",
+        "vmssZones": "[if(equals(parameters('sharedHaType'), 'zrs'), createArray(parameters('vm1Zone'), parameters('vm2Zone')), if(variables('singleAZ'), createArray(parameters('vm1Zone')), json('null')))]",
+        "diskSkuName": {
+            "zrs": "Premium_ZRS",
+            "lrs": "[if(variables('singleAZ'), 'PremiumV2_LRS', 'Premium_LRS')]",
+            "pageblob": ""
+        },
+        "clusterMgmtProbeID": "[concat(variables('loadBalancerID'),'/probes/clusterMgmtProbe')]",
+        "dataAProbeID": "[concat(variables('loadBalancerID'),'/probes/dataAProbe')]",
+        "dataBProbeID": "[concat(variables('loadBalancerID'),'/probes/dataBProbe')]",
+        "svmProbeID": "[concat(variables('loadBalancerID'),'/probes/svmProbe')]",
+        "dataAProbePort": 63002,
+        "dataBProbePort": 63003,
+        "svmProbePort": 63004,
+        "clusterMgmtFIPConfigID": "[concat(variables('loadBalancerID'),'/frontendIPConfigurations/clusterMgmtFIP')]",
+        "dataAFIPConfigID": "[concat(variables('loadBalancerID'),'/frontendIPConfigurations/dataAFIP')]",
+        "dataBFIPConfigID": "[concat(variables('loadBalancerID'),'/frontendIPConfigurations/dataBFIP')]",
+        "svmFIPConfigID": "[concat(variables('loadBalancerID'),'/frontendIPConfigurations/svmFIP')]",
+        "zones": "[if(and(not(equals(parameters('vm1Zone'), 'None')),equals(parameters('sharedHaType'),'lrs')), createArray(parameters('vm1Zone')), if(equals(toLower(parameters('zoneRedundantFIP')),'true'), createArray(1, 2, 3), createArray()))]",
+        "networkSecurityGroupName": "[concat(resourceGroup().name, '-nsg')]",
+        "nsgId": "[if(empty(parameters('networkSecurityGroupId')), resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName')), parameters('networkSecurityGroupId'))]",
+        "nsgDepends": "[if(empty(parameters('networkSecurityGroupId')), variables('nsgId'), variables('loadBalancerID'))]",
+        "defaultTag": {
+            "DeployedBySelfSetup": "true",
+            "cvoTag": "[concat('cvo-', uniqueString(subscription().subscriptionId))]"
+        }
+    },
+    "functions": [
+        {
+            "namespace": "cvoDisks",
+            "members": {
+                "rootDisk": {
+                    "parameters": [
+                        {
+                            "name": "vmName",
+                            "type": "string"
+                        },
+                        {
+                            "name": "diskEncryptionSet",
+                            "type": "string"
+                        }
+                    ],
+                    "output": {
+                        "type": "array",
+                        "value": [
+                            {
+                                "lun": 0,
+                                "name": "[concat(parameters('vmName'),'-disk-root')]",
+                                "createOption": "Attach",
+                                "caching": "None",
+                                "managedDisk": {
+                                    "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('vmName'),'-disk-root'))]",
+                                    "diskEncryptionSet": {
+                                        "id": "[if(empty(parameters('diskEncryptionSet')), json('null'), parameters('diskEncryptionSet'))]"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                "nvramNcoreDisks": {
+                    "parameters": [
+                        {
+                            "name": "vmName",
+                            "type": "string"
+                        },
+                        {
+                            "name": "diskEncryptionSet",
+                            "type": "string"
+                        }
+                    ],
+                    "output": {
+                        "type": "array",
+                        "value": [
+                            {
+                                "lun": 1,
+                                "name": "[concat(parameters('vmName'),'-disk-nvram')]",
+                                "createOption": "Attach",
+                                "caching": "None",
+                                "managedDisk": {
+                                    "id": "[resourceId('Microsoft.Compute/disks/', concat(parameters('vmName'),'-disk-nvram'))]",
+                                    "diskEncryptionSet": {
+                                        "id": "[if(empty(parameters('diskEncryptionSet')), json('null'), parameters('diskEncryptionSet'))]"
+                                    }
+                                }
+                            },
+                            {
+                                "lun": 2,
+                                "name": "[concat(parameters('vmName'),'-disk-core')]",
+                                "createOption": "Attach",
+                                "caching": "ReadOnly",
+                                "managedDisk": {
+                                    "id": "[resourceId('Microsoft.Compute/disks/',concat(parameters('vmName'),'-disk-core'))]",
+                                    "diskEncryptionSet": {
+                                        "id": "[if(empty(parameters('diskEncryptionSet')), json('null'), parameters('diskEncryptionSet'))]"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                "partnerRootDisk": {
+                    "parameters": [
+                        {
+                            "name": "vmPartnerName",
+                            "type": "string"
+                        },
+                        {
+                            "name": "diskEncryptionSet",
+                            "type": "string"
+                        }
+                    ],
+                    "output": {
+                        "type": "array",
+                        "value": [
+                            {
+                                "name": "[concat(parameters('vmPartnerName'),'-disk-root')]",
+                                "createOption": "Attach",
+                                "caching": "None",
+                                "lun": 3,
+                                "managedDisk": {
+                                    "id": "[resourceId('Microsoft.Compute/disks/', concat(parameters('vmPartnerName'),'-disk-root'))]",
+                                    "diskEncryptionSet": {
+                                        "id": "[if(empty(parameters('diskEncryptionSet')), json('null'), parameters('diskEncryptionSet'))]"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                "dataDisk": {
+                    "parameters": [
+                        {
+                            "name": "vmName",
+                            "type": "string"
+                        },
+                        {
+                            "name": "diskEncryptionSet",
+                            "type": "string"
+                        }
+                    ],
+                    "output": {
+                        "type": "array",
+                        "value": [
+                            {
+                                "lun": 4,
+                                "name": "[concat(parameters('vmName'),'datadisk4')]",
+                                "createOption": "Attach",
+                                "caching": "None",
+                                "managedDisk": {
+                                    "id": "[resourceId('Microsoft.Compute/disks/', concat(parameters('vmName'),'datadisk4'))]",
+                                    "diskEncryptionSet": {
+                                        "id": "[if(empty(parameters('diskEncryptionSet')), json('null'), parameters('diskEncryptionSet'))]"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "namespace": "cvoNics",
+            "members": {
+                "layout": {
+                    "parameters": [
+                        {
+                            "name": "vmName",
+                            "type": "string"
+                        }
+                    ],
+                    "output": {
+                        "type": "array",
+                        "value": [
+                            {
+                                "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmName'),'-nic0'))]",
+                                "properties": {
+                                    "primary": true
+                                }
+                            },
+                            {
+                                "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmName'),'-nic1'))]",
+                                "properties": {
+                                    "primary": false
+                                }
+                            },
+                            {
+                                "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmName'),'-nic2'))]",
+                                "properties": {
+                                    "primary": false
+                                }
+                            },
+                            {
+                                "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmName'),'-nic3'))]",
+                                "properties": {
+                                    "primary": false
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "resources": [
+        {
+            "condition": "[equals(parameters('vnetNewOrExisting'),'new')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('vnetName')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Network/virtualNetworks'), union(parameters('resourceTags')['Microsoft.Network/virtualNetworks'], variables('defaultTag')), variables('defaultTag')) ]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[parameters('vnetAddressPrefixes')]"
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnetAddressPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "condition": "[empty(parameters('networkSecurityGroupId'))]",
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('networkSecurityGroupName')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Network/networkSecurityGroups'), union(parameters('resourceTags')['Microsoft.Network/networkSecurityGroups'], variables('defaultTag')), variables('defaultTag')) ]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "outbound_Port_Any",
+                        "properties": {
+                            "description": "Port_Any",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "inbound_443",
+                        "properties": {
+                            "description": "443",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "inbound_111_tcp",
+                        "properties": {
+                            "description": "111",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "111",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 101,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "inbound_2049_tcp",
+                        "properties": {
+                            "description": "2049",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "2049",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 102,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "inbound_ssh",
+                        "properties": {
+                            "description": "SSH",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 111,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "inbound_53",
+                        "properties": {
+                            "description": "53",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "53",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 121,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[variables('loadBalancerName')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Network/loadBalancers'), union(parameters('resourceTags')['Microsoft.Network/loadBalancers'], variables('defaultTag')), variables('defaultTag')) ]",
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2021-08-01",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "dependsOn": [
+                "[if(equals(parameters('vnetNewOrExisting'),'new'), resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName')), resourceId('Microsoft.Compute/disks',concat(variables('vm2Name'),'-disk-core')))]"
+            ],
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "clusterMgmtFIP",
+                        "properties": {
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic"
+                        },
+                        "zones": "[variables('zones')]"
+                    },
+                    {
+                        "name": "dataAFIP",
+                        "properties": {
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic"
+                        },
+                        "zones": "[variables('zones')]"
+                    },
+                    {
+                        "name": "dataBFIP",
+                        "properties": {
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic"
+                        },
+                        "zones": "[variables('zones')]"
+                    },
+                    {
+                        "name": "svmFIP",
+                        "properties": {
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic"
+                        },
+                        "zones": "[variables('zones')]"
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "backendPool"
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "dataARule",
+                        "properties": {
+                            "enableHighAvailability": "[parameters('tcpReset')]",
+                            "frontendIPConfiguration": {
+                                "id": "[variables('dataAFIPConfigID')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[variables('backendPoolID')]"
+                            },
+                            "probe": {
+                                "id": "[variables('dataAProbeID')]"
+                            },
+                            "protocol": "All",
+                            "frontendPort": 0,
+                            "backendPort": 0,
+                            "idleTimeoutInMinutes": 30,
+                            "enableFloatingIP": true
+                        }
+                    },
+                    {
+                        "name": "dataBRule",
+                        "properties": {
+                            "enableHighAvailability": "[parameters('tcpReset')]",
+                            "frontendIPConfiguration": {
+                                "id": "[variables('dataBFIPConfigID')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[variables('backendPoolID')]"
+                            },
+                            "probe": {
+                                "id": "[variables('dataBProbeID')]"
+                            },
+                            "protocol": "All",
+                            "frontendPort": 0,
+                            "backendPort": 0,
+                            "idleTimeoutInMinutes": 30,
+                            "enableFloatingIP": true
+                        }
+                    },
+                    {
+                        "name": "clusterMgmtRule",
+                        "properties": {
+                            "enableHighAvailability": "[parameters('tcpReset')]",
+                            "frontendIPConfiguration": {
+                                "id": "[variables('clusterMgmtFIPConfigID')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[variables('backendPoolID')]"
+                            },
+                            "probe": {
+                                "id": "[variables('clusterMgmtProbeID')]"
+                            },
+                            "protocol": "All",
+                            "frontendPort": 0,
+                            "backendPort": 0,
+                            "idleTimeoutInMinutes": 30,
+                            "enableFloatingIP": true
+                        }
+                    },
+                    {
+                        "name": "svmRule",
+                        "properties": {
+                            "enableHighAvailability": "[parameters('tcpReset')]",
+                            "frontendIPConfiguration": {
+                                "id": "[variables('svmFIPConfigID')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[variables('backendPoolID')]"
+                            },
+                            "probe": {
+                                "id": "[variables('svmProbeID')]"
+                            },
+                            "protocol": "All",
+                            "frontendPort": 0,
+                            "backendPort": 0,
+                            "idleTimeoutInMinutes": 30,
+                            "enableFloatingIP": true
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "clusterMgmtProbe",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": "[variables('clusterMgmtProbePort')]",
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    },
+                    {
+                        "name": "dataAProbe",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": "[variables('dataAProbePort')]",
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    },
+                    {
+                        "name": "dataBProbe",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": "[variables('dataBProbePort')]",
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    },
+                    {
+                        "name": "svmProbe",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": "[variables('svmProbePort')]",
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/disks",
+            "name": "[concat(variables('vm1Name'),'-disk-core')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Compute/disks'), union(parameters('resourceTags')['Microsoft.Compute/disks'], variables('defaultTag')), variables('defaultTag')) ]",
+            "apiVersion": "2020-12-01",
+            "location": "[parameters('location')]",
+            "zones": "[variables('vm1Zone')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "properties": {
+                "creationData": {
+                    "createOption": "Empty"
+                },
+                "encryption": "[if(empty(parameters('diskEncryptionSet')), json('null'), createObject('diskEncryptionSetId', parameters('diskEncryptionSet')))]",
+                "diskSizeGB": "[variables('coreDiskSizeInGB')]"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/disks",
+            "name": "[concat(variables('vm2Name'),'-disk-core')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Compute/disks'), union(parameters('resourceTags')['Microsoft.Compute/disks'], variables('defaultTag')), variables('defaultTag')) ]",
+            "apiVersion": "2020-12-01",
+            "location": "[parameters('location')]",
+            "zones": "[variables('vm2Zone')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "properties": {
+                "creationData": {
+                    "createOption": "Empty"
+                },
+                "encryption": "[if(empty(parameters('diskEncryptionSet')), json('null'), createObject('diskEncryptionSetId', parameters('diskEncryptionSet')))]",
+                "diskSizeGB": "[variables('coreDiskSizeInGB')]"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/disks",
+            "name": "[concat(variables('vm1Name'),'-disk-nvram')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Compute/disks'), union(parameters('resourceTags')['Microsoft.Compute/disks'], variables('defaultTag')), variables('defaultTag')) ]",
+            "apiVersion": "2022-03-02",
+            "location": "[parameters('location')]",
+            "zones": "[variables('vm1Zone')]",
+            "sku": {
+                "name": "[if(variables('singleAZ'), 'PremiumV2_LRS', 'Premium_LRS')]"
+            },
+            "properties": {
+                "creationData": {
+                    "createOption": "Empty",
+                    "logicalSectorSize": "[if(variables('singleAZ'), '4096', '')]"
+                },
+                "encryption": "[if(empty(parameters('diskEncryptionSet')), json('null'), createObject('diskEncryptionSetId', parameters('diskEncryptionSet')))]",
+                "diskSizeGB": "[if(variables('singleAZ'), parameters('premiumSSDv2NvramDiskSizeInGB'), variables('plrsNvramDiskSizeInGB'))]",
+                "diskIOPSReadWrite": "[if(variables('singleAZ'), parameters('premiumSSDv2NvramDiskIOPSReadWrite'), '')]",
+                "diskMBpsReadWrite": "[if(variables('singleAZ'), parameters('premiumSSDv2NvramDiskMBpsReadWrite'), '')]"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/disks",
+            "name": "[concat(variables('vm2Name'),'-disk-nvram')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Compute/disks'), union(parameters('resourceTags')['Microsoft.Compute/disks'], variables('defaultTag')), variables('defaultTag')) ]",
+            "zones": "[variables('vm2Zone')]",
+            "apiVersion": "2022-03-02",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[if(variables('singleAZ'), 'PremiumV2_LRS', 'Premium_LRS')]"
+            },
+            "properties": {
+                "creationData": {
+                    "createOption": "Empty",
+                    "logicalSectorSize": "[if(variables('singleAZ'), '4096', '')]"
+                },
+                "encryption": "[if(empty(parameters('diskEncryptionSet')), json('null'), createObject('diskEncryptionSetId', parameters('diskEncryptionSet')))]",
+                "diskSizeGB": "[if(variables('singleAZ'), parameters('premiumSSDv2NvramDiskSizeInGB'), variables('plrsNvramDiskSizeInGB'))]",
+                "diskIOPSReadWrite": "[if(variables('singleAZ'), parameters('premiumSSDv2NvramDiskIOPSReadWrite'), '')]",
+                "diskMBpsReadWrite": "[if(variables('singleAZ'), parameters('premiumSSDv2NvramDiskMBpsReadWrite'), '')]"
+            }
+        },
+        {
+            "condition": "[equals(parameters('imageSource'),'vhd')]",
+            "type": "Microsoft.Compute/images",
+            "name": "[concat(resourceGroup().name,'-image')]",
+            "apiVersion": "2017-03-30",
+            "location": "[parameters('location')]",
+            "properties": {
+                "storageProfile": {
+                    "osDisk": {
+                        "osType": "Linux",
+                        "blobUri": "[parameters('vhdUri')]",
+                        "caching": "ReadOnly",
+                        "storageAccountType": "Premium_LRS"
+                    }
+                }
+            }
+        },
+        {
+            "condition": "[not(equals(parameters('sharedHaType'),'pageblob'))]",
+            "type": "Microsoft.Compute/disks",
+            "name": "[concat(variables('vm1Name'),'-disk-root')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Compute/disks'), union(parameters('resourceTags')['Microsoft.Compute/disks'], variables('defaultTag')), variables('defaultTag')) ]",
+            "zones": "[if(variables('singleAZ'), variables('vm1Zone'), json('null'))]",
+            "apiVersion": "2022-03-02",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[variables('diskSkuName')[parameters('sharedHaType')]]"
+            },
+            "properties": {
+                "creationData": {
+                    "createOption": "Empty",
+                    "logicalSectorSize": "[if(variables('singleAZ'), '4096', '')]"
+                },
+                "encryption": "[if(empty(parameters('diskEncryptionSet')), json('null'), createObject('diskEncryptionSetId', parameters('diskEncryptionSet')))]",
+                "diskSizeGB": "[variables('rootDiskSizeInGB')]",
+                "diskIOPSReadWrite": "[if(variables('singleAZ'), '3000', '')]",
+                "diskMBpsReadWrite": "[if(variables('singleAZ'), '150', '')]",
+                "maxShares": 2
+            }
+        },
+        {
+            "condition": "[not(equals(parameters('sharedHaType'),'pageblob'))]",
+            "type": "Microsoft.Compute/disks",
+            "name": "[concat(variables('vm2Name'),'-disk-root')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Compute/disks'), union(parameters('resourceTags')['Microsoft.Compute/disks'], variables('defaultTag')), variables('defaultTag')) ]",
+            "zones": "[if(variables('singleAZ'), variables('vm2Zone'), json('null'))]",
+            "apiVersion": "2022-03-02",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[variables('diskSkuName')[parameters('sharedHaType')]]"
+            },
+            "properties": {
+                "creationData": {
+                    "createOption": "Empty",
+                    "logicalSectorSize": "[if(variables('singleAZ'), '4096', '')]"
+                },
+                "encryption": "[if(empty(parameters('diskEncryptionSet')), json('null'), createObject('diskEncryptionSetId', parameters('diskEncryptionSet')))]",
+                "diskSizeGB": "[variables('rootDiskSizeInGB')]",
+                "diskIOPSReadWrite": "[if(variables('singleAZ'), '3000', '')]",
+                "diskMBpsReadWrite": "[if(variables('singleAZ'), '150', '')]",
+                "maxShares": 2
+            }
+        },
+        {
+            "condition": "[not(equals(parameters('sharedHaType'),'pageblob'))]",
+            "type": "Microsoft.Compute/disks",
+            "name": "[concat(parameters('instanceName'),'datadisk4')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Compute/disks'), union(parameters('resourceTags')['Microsoft.Compute/disks'], variables('defaultTag')), variables('defaultTag')) ]",
+            "zones": "[if(variables('singleAZ'), variables('vm1Zone'), json('null'))]",
+            "apiVersion": "2022-03-02",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[variables('diskSkuName')[parameters('sharedHaType')]]"
+            },
+            "properties": {
+                "creationData": {
+                    "createOption": "Empty",
+                    "logicalSectorSize": "[if(variables('singleAZ'), '4096', '')]"
+                },
+                "encryption": "[if(empty(parameters('diskEncryptionSet')), json('null'), createObject('diskEncryptionSetId', parameters('diskEncryptionSet')))]",
+                "diskSizeGB": "[parameters('dataDiskSizeInGB')]",
+                "diskIOPSReadWrite": "[if(variables('singleAZ'), '3000', '')]",
+                "diskMBpsReadWrite": "[if(variables('singleAZ'), '150', '')]",
+                "maxShares": 2
+            }
+        },
+        {
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(variables('vm1Name'),'-nic0')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Network/networkInterfaces'), union(parameters('resourceTags')['Microsoft.Network/networkInterfaces'], variables('defaultTag')), variables('defaultTag')) ]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('nsgDepends')]",
+                "[variables('loadBalancerID')]"
+            ],
+            "properties": {
+                "enableAcceleratedNetworking": "[parameters('enableSriov')]",
+                "ipConfigurations": [
+                    {
+                        "name": "NodeManagementInterfaceIp",
+                        "properties": {
+                            "primary": true,
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[variables('backendPoolID')]"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "InterclusterInterfaceIpForInternalUse",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "IscsiDataInterfaceIp",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(variables('vm1Name'),'-nic1')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Network/networkInterfaces'), union(parameters('resourceTags')['Microsoft.Network/networkInterfaces'], variables('defaultTag')), variables('defaultTag')) ]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('nsgDepends')]"
+            ],
+            "properties": {
+                "enableAcceleratedNetworking": "[parameters('enableSriov')]",
+                "ipConfigurations": [
+                    {
+                        "name": "ClusterInterfaceIpForInternalUse",
+                        "properties": {
+                            "primary": true,
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(variables('vm1Name'),'-nic2')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Network/networkInterfaces'), union(parameters('resourceTags')['Microsoft.Network/networkInterfaces'], variables('defaultTag')), variables('defaultTag')) ]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('nsgDepends')]"
+            ],
+            "properties": {
+                "enableAcceleratedNetworking": "[parameters('enableSriov')]",
+                "ipConfigurations": [
+                    {
+                        "name": "InterconnectInterfaceIpForInternalUse",
+                        "properties": {
+                            "primary": true,
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                }
+            }
+        },
+        {
+            "condition": "[equals(parameters('sharedHaType'),'pageblob')]",
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(variables('vm1Name'),'-nic3')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Network/networkInterfaces'), union(parameters('resourceTags')['Microsoft.Network/networkInterfaces'], variables('defaultTag')), variables('defaultTag')) ]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('nsgDepends')]"
+            ],
+            "properties": {
+                "enableAcceleratedNetworking": "[parameters('enableSriov')]",
+                "ipConfigurations": [
+                    {
+                        "name": "PageblobInterfaceIpForInternalUse",
+                        "properties": {
+                            "primary": true,
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(variables('vm2Name'),'-nic0')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Network/networkInterfaces'), union(parameters('resourceTags')['Microsoft.Network/networkInterfaces'], variables('defaultTag')), variables('defaultTag')) ]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('nsgDepends')]",
+                "[variables('loadBalancerID')]"
+            ],
+            "properties": {
+                "enableAcceleratedNetworking": "[parameters('enableSriov')]",
+                "ipConfigurations": [
+                    {
+                        "name": "NodeManagementInterfaceIp",
+                        "properties": {
+                            "primary": true,
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[variables('backendPoolID')]"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "InterclusterInterfaceIpForInternalUse",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "IscsiDataInterfaceIp",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(variables('vm2Name'),'-nic1')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Network/networkInterfaces'), union(parameters('resourceTags')['Microsoft.Network/networkInterfaces'], variables('defaultTag')), variables('defaultTag')) ]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('nsgDepends')]"
+            ],
+            "properties": {
+                "enableAcceleratedNetworking": "[parameters('enableSriov')]",
+                "ipConfigurations": [
+                    {
+                        "name": "ClusterInterfaceIpForInternalUse",
+                        "properties": {
+                            "primary": true,
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(variables('vm2Name'),'-nic2')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Network/networkInterfaces'), union(parameters('resourceTags')['Microsoft.Network/networkInterfaces'], variables('defaultTag')), variables('defaultTag')) ]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('nsgDepends')]"
+            ],
+            "properties": {
+                "enableAcceleratedNetworking": "[parameters('enableSriov')]",
+                "ipConfigurations": [
+                    {
+                        "name": "InterconnectInterfaceIpForInternalUse",
+                        "properties": {
+                            "primary": true,
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                }
+            }
+        },
+        {
+            "condition": "[equals(parameters('sharedHaType'),'pageblob')]",
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(variables('vm2Name'),'-nic3')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Network/networkInterfaces'), union(parameters('resourceTags')['Microsoft.Network/networkInterfaces'], variables('defaultTag')), variables('defaultTag')) ]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('nsgDepends')]"
+            ],
+            "properties": {
+                "enableAcceleratedNetworking": "[parameters('enableSriov')]",
+                "ipConfigurations": [
+                    {
+                        "name": "PageblobInterfaceIpForInternalUse",
+                        "properties": {
+                            "primary": true,
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[parameters('subnetId')]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[variables('nsgId')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachineScaleSets",
+            "name": "[concat(parameters('instanceName'), '-vmss')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Compute/virtualMachineScaleSets'), union(parameters('resourceTags')['Microsoft.Compute/virtualMachineScaleSets'], variables('defaultTag')), variables('defaultTag')) ]",
+            "apiVersion": "2022-03-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "orchestrationMode": "Flexible",
+                "singlePlacementGroup": false,
+                "platformFaultDomainCount": "[if(equals(parameters('sharedHaType'),'zrs'), '1', '2')]"
+            },
+            "zones": "[variables('vmssZones')]"
+        },
+        {
+            "name": "[variables('vm1Name')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2022-03-01",
+            "plan": "[variables('planVar')]",
+            "location": "[parameters('location')]",
+            "zones": "[variables('vm1Zone')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Compute/virtualMachines'), union(parameters('resourceTags')['Microsoft.Compute/virtualMachines'], variables('defaultTag')), variables('defaultTag')) ]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/disks',concat(variables('vm1Name'),'-disk-core'))]",
+                "[resourceId('Microsoft.Compute/disks',concat(variables('vm2Name'),'-disk-core'))]",
+                "[resourceId('Microsoft.Compute/disks',concat(variables('vm1Name'),'-disk-nvram'))]",
+                "[resourceId('Microsoft.Compute/disks',concat(variables('vm2Name'),'-disk-nvram'))]",
+                "[resourceId('Microsoft.Compute/disks',concat(parameters('instanceName'),'datadisk4'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vm1Name'),'-nic0'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vm1Name'),'-nic1'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vm1Name'),'-nic2'))]",
+                "[variables('vm1Nic3Depends')]",
+                "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vm2Name'),'-nic0'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vm2Name'),'-nic1'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vm2Name'),'-nic2'))]",
+                "[variables('vm2Nic3Depends')]",
+                "[variables('root1Depends')]",
+                "[variables('root2Depends')]",
+                "[variables('imageDepends')]",
+                "[resourceId('Microsoft.Compute/virtualMachineScaleSets', concat(parameters('instanceName'),'-vmss'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('instanceType')]"
+                },
+                "osProfile": {
+                    "allowExtensionOperations": false,
+                    "computername": "[variables('vm1Name')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "customData": "[base64(concat('vm_name=vm1', '\n', 'deployment_type=shared_ha', '\n', 'shared_ha_type=', parameters('sharedHaType'), '\n', 'ontap_cloud_platform_serial_number=', parameters('vm1PlatformSerialNumber'), '\n', 'subnet_mask=', parameters('subnetMask'), '\n', 'subnet_gateway_ip=', parameters('subnetGatewayIp'), '\n', 'mgmt_local_ip=', reference(concat(variables('vm1Name'),'-nic0')).ipConfigurations[0].properties.privateIPAddress, '\n', 'mgmt_partner_ip=', reference(concat(variables('vm2Name'),'-nic0')).ipConfigurations[0].properties.privateIPAddress, '\n', 'cluster_local_ip=', reference(concat(variables('vm1Name'),'-nic1')).ipConfigurations[0].properties.privateIPAddress, '\n', 'cluster_partner_ip=', reference(concat(variables('vm2Name'),'-nic1')).ipConfigurations[0].properties.privateIPAddress, '\n', 'ic_local_ip=', reference(concat(variables('vm1Name'),'-nic2')).ipConfigurations[0].properties.privateIPAddress, '\n', 'ic_partner_ip=', reference(concat(variables('vm2Name'),'-nic2')).ipConfigurations[0].properties.privateIPAddress, '\n', 'pageblob_local_ip=', if(equals(parameters('sharedHaType'),'pageblob'), reference(concat(variables('vm1Name'),'-nic3')).ipConfigurations[0].properties.privateIPAddress, ''), '\n', 'pageblob_partner_ip=', if(equals(parameters('sharedHaType'),'pageblob'), reference(concat(variables('vm2Name'),'-nic3')).ipConfigurations[0].properties.privateIPAddress, ''), '\n', 'pageblob_container=', variables('pageblobContainerName'), '\n', 'pageblob_sa_name=', parameters('pageblobStorageAccountName'), '\n', 'pageblob_sa_key=', variables('pageblobStorageAccountKeyMod'), '\n', 'pageblob_sa_fqdn=', variables('pageblobStorageAccountFQDN'), '\n', 'pageblob_sa_ip=', parameters('pageblobStorageAccountIp'), '\n', 'pageblob_sa_port=', variables('pageblobSAPort'), '\n', 'nvlog_media_type=', parameters('nvLogMediaType'), '\n', 'cluster_mgmt_ip=', reference(variables('loadBalancerID'), '2018-04-01').frontendIPConfigurations[0].properties.privateIPAddress, '\n', 'intercluster_local_ip=', reference(concat(variables('vm1Name'),'-nic0')).ipConfigurations[1].properties.privateIPAddress, '\n', 'subnet_address_prefix=', parameters('subnetAddressPrefix'), '\n', 'dataA_fip=', reference(variables('loadBalancerID'), '2018-04-01').frontendIPConfigurations[1].properties.privateIPAddress, '\n', 'dataB_fip=', reference(variables('loadBalancerID'), '2018-04-01').frontendIPConfigurations[2].properties.privateIPAddress, '\n', 'iscsi_local_ip=', reference(concat(variables('vm1Name'),'-nic0')).ipConfigurations[2].properties.privateIPAddress, '\n', 'iscsi_partner_ip=', reference(concat(variables('vm2Name'),'-nic0')).ipConfigurations[2].properties.privateIPAddress, '\n', 'data_svm_fip=', reference(variables('loadBalancerID'), '2018-04-01').frontendIPConfigurations[3].properties.privateIPAddress, '\n', 'cvo_self_setup=true', '\n', 'admin_password=', parameters('adminPassword'), '\n', 'user_bootargs=', parameters('userBootargs'), '\n'))]"
+                },
+                "storageProfile": {
+                    "imageReference": "[variables('imageRef')[parameters('imageSource')]]",
+                    "osDisk": {
+                        "name": "[concat(variables('vm1Name'),'-disk-boot')]",
+                        "caching": "ReadOnly",
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS",
+                            "diskEncryptionSet": {
+                                "id": "[if(empty(parameters('diskEncryptionSet')), json('null'), parameters('diskEncryptionSet'))]"
+                            }
+                        }
+                    },
+                    "dataDisks": "[if(equals(parameters('sharedHaType'), 'pageblob'), cvoDisks.nvramNcoreDisks(variables('vm1Name'), parameters('diskEncryptionSet')), union(cvoDisks.nvramNcoreDisks(variables('vm1Name'), parameters('diskEncryptionSet')), cvoDisks.rootDisk(variables('vm1Name'), parameters('diskEncryptionSet')), cvoDisks.dataDisk(parameters('instanceName'), parameters('diskEncryptionSet'))))]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": "[if(equals(parameters('sharedHaType'), 'pageblob'), cvoNics.layout(variables('vm1Name')), take(cvoNics.layout(variables('vm1Name')),3))]"
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true
+                    }
+                },
+                "virtualMachineScaleSet": {
+                    "id": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', concat(parameters('instanceName'), '-vmss'))]"
+                }
+            }
+        },
+        {
+            "name": "[variables('vm2Name')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2022-03-01",
+            "plan": "[variables('planVar')]",
+            "location": "[parameters('location')]",
+            "zones": "[variables('vm2Zone')]",
+            "tags": "[ if(contains(parameters('resourceTags'), 'Microsoft.Compute/virtualMachines'), union(parameters('resourceTags')['Microsoft.Compute/virtualMachines'], variables('defaultTag')), variables('defaultTag')) ]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/disks',concat(variables('vm1Name'),'-disk-core'))]",
+                "[resourceId('Microsoft.Compute/disks',concat(variables('vm2Name'),'-disk-core'))]",
+                "[resourceId('Microsoft.Compute/disks',concat(variables('vm1Name'),'-disk-nvram'))]",
+                "[resourceId('Microsoft.Compute/disks',concat(variables('vm2Name'),'-disk-nvram'))]",
+                "[resourceId('Microsoft.Compute/disks',concat(parameters('instanceName'),'datadisk4'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vm1Name'),'-nic0'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vm1Name'),'-nic1'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vm1Name'),'-nic2'))]",
+                "[variables('vm1Nic3Depends')]",
+                "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vm2Name'),'-nic0'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vm2Name'),'-nic1'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vm2Name'),'-nic2'))]",
+                "[variables('vm2Nic3Depends')]",
+                "[variables('root1Depends')]",
+                "[variables('root2Depends')]",
+                "[variables('imageDepends')]",
+                "[resourceId('Microsoft.Compute/virtualMachineScaleSets',concat(parameters('instanceName'), '-vmss'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('instanceType')]"
+                },
+                "osProfile": {
+                    "allowExtensionOperations": false,
+                    "computername": "[variables('vm2Name')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "customData": "[base64(concat('vm_name=vm2', '\n', 'deployment_type=shared_ha', '\n', 'shared_ha_type=', parameters('sharedHaType'), '\n', 'ontap_cloud_platform_serial_number=', parameters('vm2PlatformSerialNumber'), '\n', 'subnet_mask=', parameters('subnetMask'), '\n', 'subnet_gateway_ip=', parameters('subnetGatewayIp'), '\n', 'mgmt_local_ip=', reference(concat(variables('vm2Name'),'-nic0')).ipConfigurations[0].properties.privateIPAddress, '\n', 'mgmt_partner_ip=', reference(concat(variables('vm1Name'),'-nic0')).ipConfigurations[0].properties.privateIPAddress, '\n', 'cluster_local_ip=', reference(concat(variables('vm2Name'),'-nic1')).ipConfigurations[0].properties.privateIPAddress, '\n', 'cluster_partner_ip=', reference(concat(variables('vm1Name'),'-nic1')).ipConfigurations[0].properties.privateIPAddress, '\n', 'ic_local_ip=', reference(concat(variables('vm2Name'),'-nic2')).ipConfigurations[0].properties.privateIPAddress, '\n', 'ic_partner_ip=', reference(concat(variables('vm1Name'),'-nic2')).ipConfigurations[0].properties.privateIPAddress, '\n', 'pageblob_local_ip=', if(equals(parameters('sharedHaType'),'pageblob'), reference(concat(variables('vm2Name'),'-nic3')).ipConfigurations[0].properties.privateIPAddress, ''), '\n', 'pageblob_partner_ip=', if(equals(parameters('sharedHaType'),'pageblob'), reference(concat(variables('vm1Name'),'-nic3')).ipConfigurations[0].properties.privateIPAddress, ''), '\n', 'pageblob_container=', variables('pageblobContainerName'), '\n', 'pageblob_sa_name=', parameters('pageblobStorageAccountName'), '\n', 'pageblob_sa_key=', variables('pageblobStorageAccountKeyMod'), '\n', 'pageblob_sa_fqdn=', variables('pageblobStorageAccountFQDN'), '\n', 'pageblob_sa_ip=', parameters('pageblobStorageAccountIp'), '\n', 'pageblob_sa_port=', variables('pageblobSAPort'), '\n', 'nvlog_media_type=', parameters('nvLogMediaType'), '\n', 'vm1_cluster_ip', reference(concat(variables('vm1Name'),'-nic1')).ipConfigurations[0].properties.privateIPAddress, '\n', 'cluster_mgmt_ip=', reference(variables('loadBalancerID'), '2018-04-01').frontendIPConfigurations[0].properties.privateIPAddress, '\n', 'intercluster_local_ip=', reference(concat(variables('vm2Name'),'-nic0')).ipConfigurations[1].properties.privateIPAddress, '\n', 'subnet_address_prefix=', parameters('subnetAddressPrefix'), '\n', 'cvo_self_setup=true', '\n', 'admin_password=', parameters('adminPassword'), '\n', 'user_bootargs=', parameters('userBootargs'), '\n'))]"
+                },
+                "storageProfile": {
+                    "imageReference": "[variables('imageRef')[parameters('imageSource')]]",
+                    "osDisk": {
+                        "name": "[concat(variables('vm2Name'),'-disk-boot')]",
+                        "caching": "ReadOnly",
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS",
+                            "diskEncryptionSet": {
+                                "id": "[if(empty(parameters('diskEncryptionSet')), json('null'), parameters('diskEncryptionSet'))]"
+                            }
+                        }
+                    },
+                    "dataDisks": "[if(equals(parameters('sharedHaType'), 'pageblob'), cvoDisks.nvramNcoreDisks(variables('vm2Name'), parameters('diskEncryptionSet')), union(cvoDisks.nvramNcoreDisks(variables('vm2Name'), parameters('diskEncryptionSet')), cvoDisks.rootDisk(variables('vm2Name'), parameters('diskEncryptionSet'))))]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": "[if(equals(parameters('sharedHaType'), 'pageblob'), cvoNics.layout(variables('vm2Name')), take(cvoNics.layout(variables('vm2Name')),3))]"
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true
+                    }
+                },
+                "virtualMachineScaleSet": {
+                    "id": "[resourceId('Microsoft.Compute/virtualMachineScaleSets', concat(parameters('instanceName'), '-vmss'))]"
+                }
+            }
+        },
+        {
+            "condition": "[not(equals(parameters('sharedHaType'),'pageblob'))]",
+            "apiVersion": "2021-04-01",
+            "name": "partnerRootDiskAttachment",
+            "type": "Microsoft.Resources/deployments",
+            "dependsOn": [
+                "[variables('vm1Depends')]",
+                "[variables('vm2Depends')]"
+            ],
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "outer"
+                },
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                        {
+                            "name": "[variables('vm1Name')]",
+                            "type": "Microsoft.Compute/virtualMachines",
+                            "apiVersion": "2022-08-01",
+                            "location": "[parameters('location')]",
+                            "properties": {
+                                "storageProfile": {
+                                    "dataDisks": "[union(cvoDisks.rootDisk(variables('vm1Name'), parameters('diskEncryptionSet')), cvoDisks.nvramNcoreDisks(variables('vm1Name'), parameters('diskEncryptionSet')), cvoDisks.partnerRootDisk(variables('vm2Name'), parameters('diskEncryptionSet')), cvoDisks.dataDisk(parameters('instanceName'), parameters('diskEncryptionSet')))]"
+                                }
+                            }
+                        },
+                        {
+                            "name": "[variables('vm2Name')]",
+                            "type": "Microsoft.Compute/virtualMachines",
+                            "apiVersion": "2022-08-01",
+                            "location": "[parameters('location')]",
+                            "dependsOn": [
+                                "[variables('vm1Depends')]"
+                            ],
+                            "properties": {
+                                "storageProfile": {
+                                    "dataDisks": "[union(cvoDisks.rootDisk(variables('vm2Name'), parameters('diskEncryptionSet')), cvoDisks.nvramNcoreDisks(variables('vm2Name'), parameters('diskEncryptionSet')), cvoDisks.partnerRootDisk(variables('vm1Name'), parameters('diskEncryptionSet')), cvoDisks.dataDisk(parameters('instanceName'), parameters('diskEncryptionSet')))]"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "apiVersion": "2021-04-01",
+            "name": "pid-a76f2118-be03-4da5-bfb9-8cf28035f319-partnercenter",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": []
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "loadBalancerName": {
+            "type": "string",
+            "value": "[variables('loadBalancerName')]"
+        },
+        "virtualMachineScaleSetName": {
+            "type": "string",
+            "value": "[concat(parameters('instanceName'), '-vmss')]"
+        },
+        "vm1Name": {
+            "type": "string",
+            "value": "[variables('vm1Name')]"
+        },
+        "vm2Name": {
+            "type": "string",
+            "value": "[variables('vm2Name')]"
+        },
+        "clusterMgmtIp": {
+            "type": "string",
+            "value": "[reference(variables('loadBalancerID'), '2018-04-01').frontendIPConfigurations[0].properties.privateIPAddress]"
+        },
+        "node1Ip": {
+            "type": "string",
+            "value": "[reference(concat(variables('vm1Name'),'-nic0')).ipConfigurations[0].properties.privateIPAddress]"
+        },
+        "node1InterclusterIp": {
+            "type": "string",
+            "value": "[reference(concat(variables('vm1Name'),'-nic0')).ipConfigurations[1].properties.privateIPAddress]"
+        },
+        "node1DataIp": {
+            "type": "string",
+            "value": "[reference(variables('loadBalancerID'), '2018-04-01').frontendIPConfigurations[1].properties.privateIPAddress]"
+        },
+        "svmIp": {
+            "type": "string",
+            "value": "[reference(variables('loadBalancerID'), '2018-04-01').frontendIPConfigurations[3].properties.privateIPAddress]"
+        },
+        "node1ClusterIp": {
+            "type": "string",
+            "value": "[reference(concat(variables('vm1Name'),'-nic1')).ipConfigurations[0].properties.privateIPAddress]"
+        },
+        "node2Ip": {
+            "type": "string",
+            "value": "[reference(concat(variables('vm2Name'),'-nic0')).ipConfigurations[0].properties.privateIPAddress]"
+        },
+        "node2InterclusterIp": {
+            "type": "string",
+            "value": "[reference(concat(variables('vm2Name'),'-nic0')).ipConfigurations[1].properties.privateIPAddress]"
+        },
+        "node2DataIp": {
+            "type": "string",
+            "value": "[reference(variables('loadBalancerID'), '2018-04-01').frontendIPConfigurations[2].properties.privateIPAddress]"
+        },
+        "node2ClusterIp": {
+            "type": "string",
+            "value": "[reference(concat(variables('vm2Name'),'-nic1')).ipConfigurations[0].properties.privateIPAddress]"
+        },
+        "subnetGatewayIp": {
+            "type": "string",
+            "value": "[parameters('subnetGatewayIp')]"
+        },
+        "subnetMask": {
+            "type": "string",
+            "value": "[parameters('subnetMask')]"
+        },
+        "loadBalancerID": {
+            "type": "string",
+            "value": "[variables('loadBalancerID')]"
+        },
+        "clusterMgmtProbePort": {
+            "type": "string",
+            "value": "[string(variables('clusterMgmtProbePort'))]"
+        }
+    }
+}

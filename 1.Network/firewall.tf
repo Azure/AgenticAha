@@ -17,6 +17,7 @@ variable firewall {
 }
 
 resource azurerm_firewall_policy main {
+  count               = var.firewall.enable ? 1 : 0
   name                = var.firewall.name
   resource_group_name = azurerm_resource_group.network.name
   location            = azurerm_resource_group.network.location
@@ -30,8 +31,9 @@ resource azurerm_firewall_policy main {
 }
 
 resource azurerm_firewall_policy_rule_collection_group main {
-  name               = azurerm_firewall_policy.main.name
-  firewall_policy_id = azurerm_firewall_policy.main.id
+  count              = var.firewall.enable ? 1 : 0
+  name               = azurerm_firewall_policy.main[0].name
+  firewall_policy_id = azurerm_firewall_policy.main[0].id
   priority           = 1000
   network_rule_collection {
     name     = "Outbound"
@@ -61,6 +63,11 @@ resource azurerm_public_ip virtual_network {
   depends_on = [
     azurerm_resource_group.network
   ]
+  lifecycle {
+    ignore_changes = [
+      ip_tags
+    ]
+  }
 }
 
 resource azurerm_firewall virtual_network {
@@ -68,7 +75,7 @@ resource azurerm_firewall virtual_network {
   name                = var.firewall.name
   resource_group_name = azurerm_public_ip.virtual_network[0].resource_group_name
   location            = azurerm_public_ip.virtual_network[0].location
-  firewall_policy_id  = azurerm_firewall_policy.main.id
+  firewall_policy_id  = azurerm_firewall_policy.main[0].id
   sku_tier            = var.firewall.tier
   sku_name            = "AZFW_VNet"
   ip_configuration {
@@ -94,7 +101,7 @@ resource azurerm_firewall virtual_wan {
   name                = var.firewall.name
   resource_group_name = azurerm_virtual_wan.main[0].resource_group_name
   location            = azurerm_virtual_wan.main[0].location
-  firewall_policy_id  = azurerm_firewall_policy.main.id
+  firewall_policy_id  = azurerm_firewall_policy.main[0].id
   sku_tier            = var.firewall.tier
   sku_name            = "AZFW_Hub"
   virtual_hub {

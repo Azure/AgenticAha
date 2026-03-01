@@ -6,29 +6,44 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~>4.57.0"
+      version = "~>4.62.0"
     }
     azuread = {
       source  = "hashicorp/azuread"
-      version = "~>3.7.0"
+      version = "~>3.8.0"
     }
     http = {
       source  = "hashicorp/http"
       version = "~>3.5.0"
     }
-    time = {
-      source  = "hashicorp/time"
-      version = "~>0.13.0"
-    }
     tls = {
       source  = "hashicorp/tls"
-      version = "~>4.1.0"
+      version = "~>4.2.0"
     }
   }
 }
 
 provider azurerm {
   features {
+    application_insights {
+      disable_generated_rule = false
+    }
+    key_vault {
+      purge_soft_delete_on_destroy                                = true
+      purge_soft_deleted_keys_on_destroy                          = true
+      purge_soft_deleted_secrets_on_destroy                       = true
+      purge_soft_deleted_certificates_on_destroy                  = true
+      purge_soft_deleted_hardware_security_modules_on_destroy     = true
+      purge_soft_deleted_hardware_security_module_keys_on_destroy = true
+      recover_soft_deleted_key_vaults                             = true
+      recover_soft_deleted_keys                                   = true
+      recover_soft_deleted_secrets                                = true
+      recover_soft_deleted_certificates                           = true
+      recover_soft_deleted_hardware_security_module_keys          = true
+    }
+    log_analytics_workspace {
+      permanently_delete_on_destroy = false
+    }
     resource_group {
       prevent_deletion_if_contains_resources = false
     }
@@ -41,7 +56,7 @@ variable subscriptionId {
   type = string
 }
 
-variable defaultLocation {
+variable hubRegion {
   type = string
 }
 
@@ -65,7 +80,15 @@ data azuread_user current {
 
 resource azurerm_resource_group foundation {
   name     = regex("resource_group_name${local.backendConfig.patternSuffix}", file("./backend.config"))[0]
-  location = var.defaultLocation
+  location = var.hubRegion
+  tags = {
+    Module = basename(path.cwd)
+  }
+}
+
+resource azurerm_resource_group foundation_identity {
+  name     = "${azurerm_resource_group.foundation.name}.Identity"
+  location = azurerm_resource_group.foundation.location
   tags = {
     Module = basename(path.cwd)
   }
@@ -81,10 +104,4 @@ resource azurerm_resource_group foundation_monitor {
 
 output subscriptionId {
   value = data.azurerm_subscription.current.subscription_id
-}
-
-output resourceGroup {
-  value = {
-    name = azurerm_resource_group.foundation.name
-  }
 }

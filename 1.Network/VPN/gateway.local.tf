@@ -50,6 +50,6 @@ resource azurerm_virtual_network_gateway_connection site_to_site {
   type                       = "IPsec"
   virtual_network_gateway_id = azurerm_virtual_network_gateway.vpn.id
   local_network_gateway_id   = azurerm_local_network_gateway.vpn[0].id
+  bgp_enabled                = var.vpnGatewayLocal.bgp.enable
   shared_key                 = var.vpnGateway.sharedKey
-  enable_bgp                 = var.vpnGatewayLocal.bgp.enable
 }

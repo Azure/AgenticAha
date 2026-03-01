@@ -31,9 +31,6 @@ containerRegistry = {
   adminUser = {
     enable = false
   }
-  encryption = {
-    enable = false
-  }
   retentionPolicy = {
     enable = false
     days   = 7
@@ -117,9 +114,14 @@ containerRegistry = {
   ]
 }
 
-########################
-# Brownfield Resources #
-########################
+#########################
+# Dependency References #
+#########################
+
+managedIdentity = { # https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview
+  name              = "aihpc"
+  resourceGroupName = "HPC.Identity"
+}
 
 virtualNetwork = { # https://learn.microsoft.com/azure/virtual-network/virtual-networks-overview
   name              = "HPC"

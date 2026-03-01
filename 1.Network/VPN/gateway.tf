@@ -12,7 +12,9 @@ variable vpnGateway {
     vpnType    = string
     generation = string
     sharedKey  = string
-    enableBgp  = bool
+    bgp = object({
+      enable = bool
+    })
     pointToSite = object({
       enable = bool
       client = object({
@@ -49,7 +51,7 @@ resource azurerm_virtual_network_gateway vpn {
   sku                 = var.vpnGateway.type
   vpn_type            = var.vpnGateway.vpnType
   generation          = var.vpnGateway.generation
-  enable_bgp          = var.vpnGateway.enableBgp
+  bgp_enabled         = var.vpnGateway.bgp.enable
   active_active       = var.ipAddressPrefix.activeActive.enable
   ip_configuration {
     name                 = "ipConfig1"

@@ -118,23 +118,23 @@ resource azurerm_private_endpoint monitor {
 }
 
 resource azurerm_monitor_private_link_scope monitor {
-  name                  = data.terraform_remote_state.foundation.outputs.monitor.workspace.name
-  resource_group_name   = data.terraform_remote_state.foundation.outputs.monitor.resourceGroup.name
+  name                  = var.monitor.workspace.name
+  resource_group_name   = var.monitor.workspace.resourceGroupName
   ingestion_access_mode = "PrivateOnly"
   query_access_mode     = "PrivateOnly"
 }
 
 resource azurerm_monitor_private_link_scoped_service monitor_log_analytics {
-  name                = "${data.terraform_remote_state.foundation.outputs.monitor.workspace.name}-log-analytics"
-  resource_group_name = data.terraform_remote_state.foundation.outputs.monitor.resourceGroup.name
-  linked_resource_id  = data.terraform_remote_state.foundation.outputs.monitor.logAnalytics.id
+  name                = "${var.monitor.workspace.name}-log-analytics"
+  resource_group_name = data.azurerm_log_analytics_workspace.main.resource_group_name
+  linked_resource_id  = data.azurerm_log_analytics_workspace.main.id
   scope_name          = azurerm_monitor_private_link_scope.monitor.name
 }
 
 resource azurerm_monitor_private_link_scoped_service monitor_app_insights {
-  name                = "${data.terraform_remote_state.foundation.outputs.monitor.workspace.name}-app-insights"
-  resource_group_name = data.terraform_remote_state.foundation.outputs.monitor.resourceGroup.name
-  linked_resource_id  = data.terraform_remote_state.foundation.outputs.monitor.applicationInsights.id
+  name                = "${var.monitor.workspace.name}-app-insights"
+  resource_group_name = data.azurerm_application_insights.main.resource_group_name
+  linked_resource_id  = data.azurerm_application_insights.main.id
   scope_name          = azurerm_monitor_private_link_scope.monitor.name
 }
 

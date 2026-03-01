@@ -72,8 +72,8 @@ variable mySQL {
 resource azurerm_mysql_flexible_server main {
   count                        = var.mySQL.enable ? 1 : 0
   name                         = var.mySQL.name
-  resource_group_name          = azurerm_resource_group.data_sql[0].name
-  location                     = azurerm_resource_group.data_sql[0].location
+  resource_group_name          = azurerm_resource_group.data.name
+  location                     = azurerm_resource_group.data.location
   sku_name                     = var.mySQL.type
   version                      = var.mySQL.version
   backup_retention_days        = var.mySQL.backup.retentionDays
@@ -116,7 +116,7 @@ resource azurerm_mysql_flexible_server main {
 resource azurerm_mysql_flexible_server_firewall_rule main {
   count               = var.mySQL.enable ? 1 : 0
   name                = "AllowCurrentIP"
-  resource_group_name = azurerm_resource_group.data_sql[0].name
+  resource_group_name = azurerm_resource_group.data.name
   server_name         = azurerm_mysql_flexible_server.main[0].name
   start_ip_address    = jsondecode(data.http.client_address.response_body).ip
   end_ip_address      = jsondecode(data.http.client_address.response_body).ip
@@ -136,7 +136,7 @@ resource azurerm_mysql_flexible_database main {
     for database in var.mySQL.databases : database.name => database if database.enable && var.mySQL.enable
   }
   name                = each.value.name
-  resource_group_name = azurerm_resource_group.data_sql[0].name
+  resource_group_name = azurerm_resource_group.data.name
   server_name         = azurerm_mysql_flexible_server.main[0].name
   charset             = each.value.charset
   collation           = each.value.collation
@@ -149,7 +149,7 @@ resource azurerm_mysql_flexible_database main {
 resource azurerm_private_dns_zone mysql {
   count               = var.mySQL.enable ? 1 : 0
   name                = "privatelink.mysql.database.azure.com"
-  resource_group_name = azurerm_resource_group.data_sql[0].name
+  resource_group_name = azurerm_resource_group.data.name
 }
 
 resource azurerm_private_dns_zone_virtual_network_link mysql {
@@ -182,11 +182,5 @@ resource azurerm_data_protection_backup_vault mysql {
 output mySQL {
   value = var.mySQL.enable ? {
     fqdn = azurerm_mysql_flexible_server.main[0].fqdn
-    zone = azurerm_mysql_flexible_server.main[0].zone
-    highAvailability = var.mySQL.highAvailability.enable ? {
-      mode        = azurerm_mysql_flexible_server.main[0].high_availability[0].mode
-      standbyZone = azurerm_mysql_flexible_server.main[0].high_availability[0].standby_availability_zone
-    } : null
-    authentication = var.mySQL.authentication
   } : null
 }

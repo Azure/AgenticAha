@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~>4.57.0"
+      version = "~>4.62.0"
     }
     http = {
       source  = "hashicorp/http"
@@ -27,6 +27,13 @@ variable resourceGroupName {
   type = string
 }
 
+variable managedIdentity {
+  type = object({
+    name              = string
+    resourceGroupName = string
+  })
+}
+
 variable virtualNetwork {
   type = object({
     name              = string
@@ -47,8 +54,8 @@ data terraform_remote_state foundation {
 }
 
 data azurerm_user_assigned_identity main {
-  name                = data.terraform_remote_state.foundation.outputs.managedIdentity.name
-  resource_group_name = data.terraform_remote_state.foundation.outputs.resourceGroup.name
+  name                = var.managedIdentity.name
+  resource_group_name = var.managedIdentity.resourceGroupName
 }
 
 data azurerm_virtual_network main {

@@ -155,6 +155,11 @@ resource azurerm_public_ip bastion {
   depends_on = [
     azurerm_resource_group.network_regions
   ]
+  lifecycle {
+    ignore_changes = [
+      ip_tags
+    ]
+  }
 }
 
 resource azurerm_bastion_host main {

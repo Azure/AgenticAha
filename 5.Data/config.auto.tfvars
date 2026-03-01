@@ -10,7 +10,7 @@ resourceGroupName = "HPC.Data"
 mySQL = {
   enable  = true
   name    = "aihpc"
-  type    = "B_Standard_B1ms" # https://learn.microsoft.com/azure/mysql/flexible-server/concepts-service-tiers-storage
+  type    = "GP_Standard_D2ads_v5" # https://learn.microsoft.com/azure/mysql/flexible-server/concepts-service-tiers-storage
   version = "8.4"
   authentication = {
     sql = {
@@ -71,33 +71,52 @@ mySQL = {
   ]
 }
 
-######################################################################################
-# Fabric (https://learn.microsoft.com/fabric/fundamentals/microsoft-fabric-overview) #
-######################################################################################
+################################################################################################
+# Microsoft Fabric (https://learn.microsoft.com/fabric/fundamentals/microsoft-fabric-overview) #
+################################################################################################
 
-fabric = {
-  enable = false
-  workspace = {
-    name = "aihpc"
-  }
+msFabric = {
   capacity = {
+    enable   = false
+    name     = "aihpc"
+    size     = "F2"
+    location = "CentralUS"
+  }
+  workspace = {
+    enable = true
     name   = "aihpc"
-    size   = "F2"
+    capacity = {
+      id = "cc5bfcb0-13fc-47b7-88c0-9f4c07a4af33"
+    }
   }
 }
 
-#########################################################
-# Purview (https://learn.microsoft.com/purview/purview) #
-#########################################################
+###################################################################
+# Microsoft Purview (https://learn.microsoft.com/purview/purview) #
+###################################################################
 
-purview = {
+msPurview = {
   enable = false
   name   = "aihpc"
 }
 
-########################
-# Brownfield Resources #
-########################
+#########################
+# Dependency References #
+#########################
+
+managedIdentity = { # https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview
+  name              = "aihpc"
+  resourceGroupName = "HPC.Identity"
+}
+
+keyVault = { # https://learn.microsoft.com/azure/key-vault/general/overview
+  name              = "aihpc"
+  resourceGroupName = "HPC"
+  secretName = {
+    adminUsername = "adminUsername"
+    adminPassword = "adminPassword"
+  }
+}
 
 virtualNetwork = { # https://learn.microsoft.com/azure/virtual-network/virtual-networks-overview
   name              = "HPC"

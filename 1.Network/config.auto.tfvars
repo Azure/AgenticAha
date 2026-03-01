@@ -87,7 +87,7 @@ hubVirtualNetworks = [
         serviceDelegation = null
       },
       {
-        name = "StorageNetApp"
+        name = "StorageANF"
         addressSpace = [
           "10.0.194.0/24"
         ]
@@ -181,13 +181,27 @@ hubVirtualNetworks = [
         }
       },
       {
-        name = "AI"
+        name = "AICore"
         addressSpace = [
           "10.0.202.0/24"
         ]
         serviceEndpoints = [
         ]
         serviceDelegation = null
+      },
+      {
+        name = "AIAgent"
+        addressSpace = [
+          "10.0.203.0/24"
+        ]
+        serviceEndpoints = [
+        ]
+        serviceDelegation = {
+          service = "Microsoft.App/environments"
+          actions = [
+            "Microsoft.Network/virtualNetworks/subnets/join/action"
+          ]
+        }
       },
       {
         name = "GatewaySubnet"
@@ -565,4 +579,64 @@ networkPeering = {
   allowRemoteNetworkAccess    = true
   allowRemoteForwardedTraffic = true
   allowGatewayTransit         = true
+}
+
+###################################################################################################################
+# Network Security Perimeter (https://learn.microsoft.com/azure/private-link/network-security-perimeter-concepts) #
+###################################################################################################################
+
+networkSecurityPerimeter = {
+  name        = "aihpc"
+  profileName = "default"
+  accessMode = {
+    keyVault       = "Enforced"
+    storageAccount = "Enforced"
+    logAnalytics   = "Enforced"
+    appInsights    = "Enforced"
+  }
+  diagnosticSetting = {
+    enable = false
+    name   = "Network Security Perimeter"
+    log = {
+      category = "AllLogs"
+    }
+  }
+}
+
+#########################
+# Dependency References #
+#########################
+
+managedIdentity = { # https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview
+  name              = "aihpc"
+  resourceGroupName = "HPC.Identity"
+}
+
+keyVault = { # https://learn.microsoft.com/azure/key-vault/general/overview
+  name              = "aihpc"
+  resourceGroupName = "HPC"
+}
+
+storageAccount = { # https://learn.microsoft.com/azure/storage/common/storage-account-overview
+  name              = "aihpc0"
+  resourceGroupName = "HPC"
+}
+
+monitor = { # https://learn.microsoft.com/azure/azure-monitor/monitor-overview
+  workspace = {
+    name              = "aihpc"
+    resourceGroupName = "HPC.Monitor"
+    logAnalytics = {
+      name              = "aihpc"
+      resourceGroupName = "HPC.Monitor"
+    }
+  }
+  appInsights = {
+    name              = "aihpc"
+    resourceGroupName = "HPC.Monitor"
+  }
+  grafanaDashboard = {
+    name              = "aihpc"
+    resourceGroupName = "HPC.Monitor"
+  }
 }

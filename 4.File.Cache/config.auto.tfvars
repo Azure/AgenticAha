@@ -1,49 +1,131 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-##########################################################################################
-# ANF Cache Volumes (https://learn.microsoft.com/azure/azure-netapp-files/cache-volumes) #
-##########################################################################################
+###########################################################################################
+# NetApp CVO (https://marketplace.microsoft.com/product/netapp.netapp-ontap-cloud-direct) #
+###########################################################################################
 
-cacheVolumes = [
-  {
-    enable  = true
-    name    = "CacheData"
-    path    = "cachedata"
-    size    = 53687091200
-    tpMibps = 1
-    protocols = [
-      "NFSv3"
-    ]
-    origin = {
-      clusterName = "CVO"
-      vServerName = "vs1"
-      volumeName  = "data1"
-      addresses = [
-        "10.3.193.11"
-      ]
-    }
+netAppCVO = {
+  enable = false
+  name   = "NetApp-CVO"
+  resourceGroup = {
+    name     = "CVO"
+    location = "CentralUS"
   }
-]
+  machine = {
+    namePrefix = "cvo"
+    size       = "Standard_E8ds_v5"
+  }
+  highAvailability = {
+    zone = "1"
+  }
+}
 
-########################
-# Brownfield Resources #
-########################
+###################################################################################################
+# NetApp Files Cache Volumes (https://learn.microsoft.com/azure/azure-netapp-files/cache-volumes) #
+###################################################################################################
+
+netAppFiles = {
+  accountName       = "aihpc"
+  capacityPoolName  = "flex"
+  resourceGroupName = "HPC.Storage.NetAppFiles"
+  volumeDestruction = {
+    prevent = false
+  }
+  cacheVolumes = [
+    {
+      enable         = false
+      name           = "cache1"
+      path           = "cache1"
+      sizeGiB        = 50
+      tpGiBps        = 12.5
+      readWrite      = false
+      allowedClients = "0.0.0.0/0"
+      enabledProtocols = [
+        "NFSv3"
+      ]
+      origin = {
+        clusterName = "cvo"
+        vServerName = "vs1"
+        volumeName  = "vs1_root"
+        addresses = [
+          "10.3.193.5",
+          "10.3.193.18"
+        ]
+      }
+    },
+    {
+      enable         = false
+      name           = "cache2"
+      path           = "cache2"
+      sizeGiB        = 50
+      tpGiBps        = 12.5
+      readWrite      = false
+      allowedClients = "0.0.0.0/0"
+      enabledProtocols = [
+        "NFSv3"
+      ]
+      origin = {
+        clusterName = "cvo"
+        vServerName = "vs1"
+        volumeName  = "vs1_root"
+        addresses = [
+          "10.3.193.5",
+          "10.3.193.18"
+        ]
+      }
+    },
+    {
+      enable         = false
+      name           = "cache3"
+      path           = "cache3"
+      sizeGiB        = 50
+      tpGiBps        = 12.5
+      readWrite      = true
+      allowedClients = "0.0.0.0/0"
+      enabledProtocols = [
+        "NFSv3"
+      ]
+      origin = {
+        clusterName = "cvo"
+        vServerName = "vs1"
+        volumeName  = "vs1_root"
+        addresses = [
+          "10.3.193.5",
+          "10.3.193.18"
+        ]
+      }
+    }
+  ]
+}
+
+#########################
+# Dependency References #
+#########################
+
+managedIdentity = { # https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview
+  name              = "aihpc"
+  resourceGroupName = "HPC.Identity"
+}
+
+keyVault = { # https://learn.microsoft.com/azure/key-vault/general/overview
+  name              = "aihpc"
+  resourceGroupName = "HPC"
+  secretName = {
+    adminUsername = "adminUsername"
+    adminPassword = "adminPassword"
+  }
+}
 
 virtualNetworkStorage = { # https://learn.microsoft.com/azure/virtual-network/virtual-networks-overview
   name              = "HPC"
   subnetName        = "Storage"
   resourceGroupName = "HPC.Network.CentralUS"
+  securityGroupName = "HPC-CentralUS-Storage"
 }
 
 virtualNetworkCache = { # https://learn.microsoft.com/azure/virtual-network/virtual-networks-overview
   name              = "HPC"
-  subnetName        = "StorageNetApp"
+  subnetName        = "StorageANF"
   resourceGroupName = "HPC.Network.SouthCentralUS"
-}
-
-netAppFiles = { # https://learn.microsoft.com/azure/azure-netapp-files/azure-netapp-files-introduction
-  accountName       = "ANF"
-  capacityPoolName  = "Flex"
-  resourceGroupName = "HPC.Storage.NetApp"
 }

@@ -12,24 +12,12 @@ variable storage {
       redundancy  = string
       performance = string
     })
-    encryption = object({
-      infrastructure = object({
-        enable = bool
-      })
-      service = object({
-        customKey = object({
-          enable = bool
-        })
-      })
-    })
   })
 }
 
 locals {
   storage = {
-    account = {
-      name = regex("storage_account_name${local.backendConfig.patternSuffix}", file("./backend.config"))[0]
-    }
+    accountName = regex("storage_account_name${local.backendConfig.patternSuffix}", file("./backend.config"))[0]
     containerName = {
       terraformState = regex("container_name${local.backendConfig.patternSuffix}", file("./backend.config"))[0]
     }
@@ -48,24 +36,16 @@ resource azurerm_role_assignment storage_blob_data_contributor {
   scope                = azurerm_storage_account.main.id
 }
 
-resource azurerm_storage_account_customer_managed_key main {
-  count              = var.storage.encryption.service.customKey.enable ? 1 : 0
-  key_vault_id       = azurerm_key_vault.main.id
-  key_name           = local.keyVault.keyName.dataEncryption
-  storage_account_id = azurerm_storage_account.main.id
-}
-
 resource azurerm_storage_account main {
-  name                              = local.storage.account.name
+  name                              = local.storage.accountName
   resource_group_name               = azurerm_resource_group.foundation.name
   location                          = azurerm_resource_group.foundation.location
   account_kind                      = var.storage.account.type
   account_replication_type          = var.storage.account.redundancy
   account_tier                      = var.storage.account.performance
-  infrastructure_encryption_enabled = var.storage.encryption.infrastructure.enable
-  local_user_enabled                = false
-  shared_access_key_enabled         = false
+  infrastructure_encryption_enabled = true
   allow_nested_items_to_be_public   = false
+  shared_access_key_enabled         = false
   identity {
     type = "UserAssigned"
     identity_ids = [
@@ -77,9 +57,14 @@ resource azurerm_storage_account main {
     ip_rules = [
       jsondecode(data.http.client_address.response_body).ip
     ]
-    private_link_access {
-      endpoint_tenant_id   = data.azurerm_client_config.current.tenant_id
-      endpoint_resource_id = "/subscriptions/${data.azurerm_subscription.current.subscription_id}/providers/Microsoft.Security/dataScanners/storageDataScanner"
+  }
+  blob_properties {
+    cors_rule {
+      allowed_origins    = ["https://studio.discovery.microsoft.com", "https://vscode.dev", "https://*.vscode-cnd.net"]
+      allowed_methods    = ["GET", "HEAD", "PUT", "DELETE"]
+      allowed_headers    = ["*"]
+      exposed_headers    = ["*"]
+      max_age_in_seconds = 200
     }
   }
 }
@@ -90,14 +75,4 @@ resource azurerm_storage_container main {
   }
   name               = each.value
   storage_account_id = azurerm_storage_account.main.id
-}
-
-output storage {
-  value = merge(local.storage, {
-    blob = {
-      apiVersion   = "2025-05-05"
-      endpointUrl  = "https://aihpc.blob.core.windows.net/bin"
-      authTokenUrl = "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2021-02-01&resource=https%3A%2F%2Fstorage.azure.com%2F"
-    }
-  })
 }

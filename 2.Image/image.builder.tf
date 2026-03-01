@@ -20,11 +20,12 @@ variable imageBuilder {
         machineType    = string
         machineSize    = string
         gpuProvider    = string
+        architecture   = string
         imageVersion   = string
         osDiskSizeGB   = number
-        timeoutMinutes = number
-        jobManagers    = list(string)
+        jobSchedulers  = list(string)
         jobProcessors  = list(string)
+        timeoutMinutes = number
       })
     }))
     distribute = object({
@@ -41,17 +42,11 @@ variable imageBuilder {
   })
 }
 
-locals {
-  blobStorage = merge(data.terraform_remote_state.foundation.outputs.storage.blob, {
-    authTokenUrl = "${data.terraform_remote_state.foundation.outputs.storage.blob.authTokenUrl}&msi_res_id=${data.azurerm_user_assigned_identity.main.id}"
-  })
-  authCredential = {
-    adminUsername   = data.azurerm_key_vault_secret.admin_username.value
-    adminPassword   = data.azurerm_key_vault_secret.admin_password.value
-    serviceUsername = data.azurerm_key_vault_secret.service_username.value
-    servicePassword = data.azurerm_key_vault_secret.service_password.value
-    hpAnywareAuthId = var.hpAnyware.authId
-  }
+resource azurerm_role_assignment managed_identity_operator {
+  count                = var.imageBuilder.enable ? 1 : 0
+  role_definition_name = "Managed Identity Operator" # https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/identity#managed-identity-operator
+  principal_id         = data.azurerm_user_assigned_identity.main.principal_id
+  scope                = data.azurerm_user_assigned_identity.main.id
 }
 
 resource azurerm_role_assignment compute_gallery_artifacts_publisher {
@@ -65,6 +60,7 @@ resource time_sleep image_builder_rbac {
   count = var.imageBuilder.enable ? 1 : 0
   create_duration = "30s"
   depends_on = [
+    azurerm_role_assignment.managed_identity_operator,
     azurerm_role_assignment.compute_gallery_artifacts_publisher
   ]
 }
@@ -102,6 +98,11 @@ resource azapi_resource linux {
         offer     = var.computeGallery.imageDefinitions[index(var.computeGallery.imageDefinitions.*.name, each.value.source.imageDefinition.name)].offer
         sku       = var.computeGallery.imageDefinitions[index(var.computeGallery.imageDefinitions.*.name, each.value.source.imageDefinition.name)].sku
         version   = var.image.linux.version
+        planInfo = {
+          planPublisher = lower(var.computeGallery.imageDefinitions[index(var.computeGallery.imageDefinitions.*.name, each.value.source.imageDefinition.name)].publisher)
+          planProduct   = lower(var.computeGallery.imageDefinitions[index(var.computeGallery.imageDefinitions.*.name, each.value.source.imageDefinition.name)].offer)
+          planName      = lower(var.computeGallery.imageDefinitions[index(var.computeGallery.imageDefinitions.*.name, each.value.source.imageDefinition.name)].sku)
+        }
       }
       optimize = {
         vmBoot = {
@@ -126,21 +127,6 @@ resource azapi_resource linux {
           },
           {
             type        = "File"
-            sourceUri   = "https://raw.githubusercontent.com/Azure/AgenticAha/main/2.Image/Linux/customize.gpu.sh"
-            destination = "/tmp/customize.gpu.sh"
-          },
-          {
-            type        = "File"
-            sourceUri   = "https://raw.githubusercontent.com/Azure/AgenticAha/main/2.Image/Linux/customize.job.manager.sh"
-            destination = "/tmp/customize.job.manager.sh"
-          },
-          {
-            type        = "File"
-            sourceUri   = "https://raw.githubusercontent.com/Azure/AgenticAha/main/2.Image/Linux/customize.job.processor.sh"
-            destination = "/tmp/customize.job.processor.sh"
-          },
-          {
-            type        = "File"
             sourceUri   = "https://raw.githubusercontent.com/Azure/AgenticAha/main/2.Image/Linux/terminate.sh"
             destination = "/tmp/terminate.sh"
           }
@@ -155,10 +141,7 @@ resource azapi_resource linux {
           {
             type = "Shell"
             inline = [
-              "cat /tmp/customize.sh | tr -d \r | imageBuildConfigEncoded=${base64encode(jsonencode(merge(each.value.build, {blobStorage = local.blobStorage}, {authCredential = local.authCredential})))} /bin/bash",
-              "cat /tmp/customize.gpu.sh | tr -d \r | imageBuildConfigEncoded=${base64encode(jsonencode(merge(each.value.build, {blobStorage = local.blobStorage}, {authCredential = local.authCredential})))} /bin/bash",
-              "cat /tmp/customize.job.manager.sh | tr -d \r | imageBuildConfigEncoded=${base64encode(jsonencode(merge(each.value.build, {blobStorage = local.blobStorage}, {authCredential = local.authCredential})))} /bin/bash",
-              "cat /tmp/customize.job.processor.sh | tr -d \r | imageBuildConfigEncoded=${base64encode(jsonencode(merge(each.value.build, {blobStorage = local.blobStorage}, {authCredential = local.authCredential})))} /bin/bash"
+              "cat /tmp/customize.sh | tr -d \r | imageBuildConfigEncoded=${base64encode(jsonencode(merge(each.value.build)))} /bin/bash"
             ]
           }
         ]
@@ -199,7 +182,7 @@ resource azapi_resource linux {
 
 resource azapi_resource windows {
   for_each = {
-    for imageTemplate in var.imageBuilder.templates : imageTemplate.name => imageTemplate if ((var.image.windows.enable && imageTemplate.enable && strcontains(lower(imageTemplate.source.imageDefinition.name), "win")) || (!var.image.windows.enable && strcontains(lower(imageTemplate.source.imageDefinition.name), "winuser"))) && var.imageBuilder.enable
+    for imageTemplate in var.imageBuilder.templates : imageTemplate.name => imageTemplate if (imageTemplate.enable && strcontains(lower(imageTemplate.source.imageDefinition.name), "win")) && var.imageBuilder.enable && var.image.windows.enable
   }
   name      = each.value.name
   type      = "Microsoft.VirtualMachineImages/imageTemplates@2024-02-01"
@@ -254,21 +237,6 @@ resource azapi_resource windows {
           },
           {
             type        = "File"
-            sourceUri   = "https://raw.githubusercontent.com/Azure/AgenticAha/main/2.Image/Windows/customize.gpu.ps1"
-            destination = "C:\\AzureData\\customize.gpu.ps1"
-          },
-          {
-            type        = "File"
-            sourceUri   = "https://raw.githubusercontent.com/Azure/AgenticAha/main/2.Image/Windows/customize.job.manager.ps1"
-            destination = "C:\\AzureData\\customize.job.manager.ps1"
-          },
-          {
-            type        = "File"
-            sourceUri   = "https://raw.githubusercontent.com/Azure/AgenticAha/main/2.Image/Windows/customize.job.processor.ps1"
-            destination = "C:\\AzureData\\customize.job.processor.ps1"
-          },
-          {
-            type        = "File"
             sourceUri   = "https://raw.githubusercontent.com/Azure/AgenticAha/main/2.Image/Windows/terminate.ps1"
             destination = "C:\\AzureData\\terminate.ps1"
           }
@@ -286,10 +254,7 @@ resource azapi_resource windows {
           {
             type = "PowerShell"
             inline = [
-              "C:\\AzureData\\customize.ps1 -imageBuildConfigEncoded ${base64encode(jsonencode(merge(each.value.build, {blobStorage = local.blobStorage}, {authCredential = local.authCredential})))}",
-              "C:\\AzureData\\customize.gpu.ps1 -imageBuildConfigEncoded ${base64encode(jsonencode(merge(each.value.build, {blobStorage = local.blobStorage}, {authCredential = local.authCredential})))}",
-              "C:\\AzureData\\customize.job.manager.ps1 -imageBuildConfigEncoded ${base64encode(jsonencode(merge(each.value.build, {blobStorage = local.blobStorage}, {authCredential = local.authCredential})))}",
-              "C:\\AzureData\\customize.job.processor.ps1 -imageBuildConfigEncoded ${base64encode(jsonencode(merge(each.value.build, {blobStorage = local.blobStorage}, {authCredential = local.authCredential})))}"
+              "C:\\AzureData\\customize.ps1 -imageBuildConfigEncoded ${base64encode(jsonencode(merge(each.value.build)))}"
             ]
             runElevated = true
             runAsSystem = true

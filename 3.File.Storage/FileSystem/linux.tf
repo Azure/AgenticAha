@@ -8,7 +8,7 @@ variable fileSystemLinux {
       mount = {
         type    = "nfs"
         path    = "/mnt/storage"
-        target  = "storage-netapp.azure.hpc:/data"
+        target  = "storage-netapp.azure.hpc:/shared"
         options = "rw,nconnect=8,vers=3"
       }
     },
