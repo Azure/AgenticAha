@@ -6,11 +6,21 @@ variable networkSecurityPerimeter {
   type = object({
     name        = string
     profileName = string
-    accessMode = object({
-      keyVault       = string
-      storageAccount = string
-      logAnalytics   = string
-      appInsights    = string
+    keyVault = object({
+      enable     = bool
+      accessMode = string
+    })
+    storageAccount = object({
+      enable     = bool
+      accessMode = string
+    })
+    logAnalytics = object({
+      enable     = bool
+      accessMode = string
+    })
+    appInsights = object({
+      enable     = bool
+      accessMode = string
     })
     diagnosticSetting = object({
       enable = bool
@@ -43,32 +53,36 @@ resource azurerm_network_security_perimeter_access_rule main {
 }
 
 resource azurerm_network_security_perimeter_association key_vault {
+  count                                 = var.networkSecurityPerimeter.keyVault.enable ? 1 : 0
   name                                  = "${data.azurerm_key_vault.main.name}-key-vault"
   resource_id                           = data.azurerm_key_vault.main.id
-  access_mode                           = var.networkSecurityPerimeter.accessMode.keyVault
+  access_mode                           = var.networkSecurityPerimeter.keyVault.accessMode
   network_security_perimeter_profile_id = azurerm_network_security_perimeter_profile.main.id
 }
 
 resource azurerm_network_security_perimeter_association storage_account {
+  count                                 = var.networkSecurityPerimeter.storageAccount.enable ? 1 : 0
   name                                  = "${data.azurerm_storage_account.main.name}-storage-account"
   resource_id                           = data.azurerm_storage_account.main.id
-  access_mode                           = var.networkSecurityPerimeter.accessMode.storageAccount
+  access_mode                           = var.networkSecurityPerimeter.storageAccount.accessMode
   network_security_perimeter_profile_id = azurerm_network_security_perimeter_profile.main.id
 }
 
 resource azurerm_network_security_perimeter_association log_analytics {
+  count                                 = var.networkSecurityPerimeter.logAnalytics.enable ? 1 : 0
   name                                  = "${data.azurerm_log_analytics_workspace.main.name}-log-analytics"
   resource_id                           = data.azurerm_log_analytics_workspace.main.id
-  access_mode                           = var.networkSecurityPerimeter.accessMode.logAnalytics
+  access_mode                           = var.networkSecurityPerimeter.logAnalytics.accessMode
   network_security_perimeter_profile_id = azurerm_network_security_perimeter_profile.main.id
 }
 
-# resource azurerm_network_security_perimeter_association app_insights {
-#   name                                  = "${data.azurerm_application_insights.main.name}-app-insights"
-#   resource_id                           = data.azurerm_application_insights.main.id
-#   access_mode                           = var.networkSecurityPerimeter.accessMode.appInsights
-#   network_security_perimeter_profile_id = azurerm_network_security_perimeter_profile.main.id
-# }
+resource azurerm_network_security_perimeter_association app_insights {
+  count                                 = var.networkSecurityPerimeter.appInsights.enable ? 1 : 0
+  name                                  = "${data.azurerm_application_insights.main.name}-app-insights"
+  resource_id                           = data.azurerm_application_insights.main.id
+  access_mode                           = var.networkSecurityPerimeter.appInsights.accessMode
+  network_security_perimeter_profile_id = azurerm_network_security_perimeter_profile.main.id
+}
 
 resource azurerm_monitor_diagnostic_setting network_security_perimeter {
   count                          = var.networkSecurityPerimeter.diagnosticSetting.enable ? 1 : 0

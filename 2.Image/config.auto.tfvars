@@ -231,7 +231,7 @@ imageBuilder = {
       }
       build = {
         machineType  = "VDI"
-        machineSize  = "Standard_NV72ads_A10_v5" # https://learn.microsoft.com/azure/virtual-machines/sizes
+        machineSize  = "Standard_NV36ads_A10_v5" # https://learn.microsoft.com/azure/virtual-machines/sizes
         gpuProvider  = "NVIDIA"                  # NVIDIA or AMD
         architecture = "x86_64"                  # x86_64 or aarch64
         imageVersion = "3.0.0"
@@ -281,7 +281,7 @@ imageBuilder = {
       }
       build = {
         machineType  = "VDI"
-        machineSize  = "Standard_NV72ads_A10_v5" # https://learn.microsoft.com/azure/virtual-machines/sizes
+        machineSize  = "Standard_NV36ads_A10_v5" # https://learn.microsoft.com/azure/virtual-machines/sizes
         gpuProvider  = "NVIDIA"                  # NVIDIA or AMD
         architecture = "x86_64"                  # x86_64 or aarch64
         imageVersion = "3.0.0"

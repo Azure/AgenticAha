@@ -15,14 +15,26 @@ ccWorkspace = {
       clientId = "6f74d27f-4199-4893-aae0-110a90ddfaf1"
     }
   }
-  netAppFiles = {
-    address      = "10.0.194.4"
-    exportPath   = "/shared"
-    mountOptions = "rw,hard,rsize=262144,wsize=262144,vers=3,tcp,_netdev"
-  }
   cycleCloud = {
-    name = "ccws"
-    size = "Standard_D4as_v5"
+    cluster = {
+      name = "CCWS"
+    }
+    machine = {
+      name = "ccws"
+      size = "Standard_D4as_v5"
+    }
+  }
+  loginNode = {
+    size     = "Standard_D4as_v5"
+    maxNodes = 3
+    image = {
+      type = "almalinux9"
+      custom = {
+        enable         = false
+        definitionName = "x64Lnx"
+        versionId      = "3.0.0"
+      }
+    }
   }
   scheduler = {
     size = "Standard_D4as_v5"
@@ -32,18 +44,6 @@ ccWorkspace = {
         enable         = false
         definitionName = "x64Lnx"
         versionId      = "1.0.0"
-      }
-    }
-  }
-  loginNode = {
-    size     = "Standard_NV12ads_A10_v5"
-    maxNodes = 3
-    image = {
-      type = "almalinux9"
-      custom = {
-        enable         = false
-        definitionName = "x64Lnx"
-        versionId      = "3.0.0"
       }
     }
   }
@@ -63,7 +63,7 @@ ccWorkspace = {
         }
       }
       htc = {
-        nodeSize = "Standard_HX176rs"
+        nodeSize = "Standard_D16as_v5"
         maxNodes = 3
         useSpot  = false
         image = {
@@ -76,7 +76,7 @@ ccWorkspace = {
         }
       }
       gpu = {
-        nodeSize = "Standard_ND96isr_MI300X_v5"
+        nodeSize = "Standard_NC40ads_H100_v5"
         maxNodes = 3
         image = {
           type = "almalinux9"
@@ -112,6 +112,11 @@ ccWorkspace = {
         versionId      = "1.0.0"
       }
     }
+  }
+  netAppFiles = {
+    address      = "10.0.194.4"
+    exportPath   = "/shared"
+    mountOptions = "rw,hard,rsize=262144,wsize=262144,vers=3,tcp,_netdev"
   }
   initMachine = {
     size = "Standard_D4as_v5"
@@ -286,4 +291,9 @@ computeGallery = { # https://learn.microsoft.com/azure/virtual-machines/compute-
 storageAccount = { # https://learn.microsoft.com/azure/storage/common/storage-account-overview
   name              = "aihpc0"
   resourceGroupName = "HPC"
+}
+
+mySqlFlexibleServer = { # https://learn.microsoft.com/azure/mysql/flexible-server/overview
+  name              = "aihpc"
+  resourceGroupName = "HPC.Data"
 }

@@ -149,13 +149,13 @@ resource azurerm_cosmosdb_account main {
     }
   }
   dynamic capabilities {
-    for_each = each.value.type == "sql" ? ["EnableNoSQLFullTextSearch", "EnableNoSQLVectorSearch"] : []
+    for_each = each.value.type == "sql" ? ["EnableNoSQLFullTextSearch","EnableNoSQLVectorSearch"] : []
     content {
       name = capabilities.value
     }
   }
   dynamic capabilities {
-    for_each = each.value.type == "mongo" ? ["EnableMongo", "EnableMongoRoleBasedAccessControl"] : []
+    for_each = each.value.type == "mongo" ? ["EnableMongo","EnableMongoRoleBasedAccessControl"] : []
     content {
       name = capabilities.value
     }

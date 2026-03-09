@@ -89,14 +89,14 @@ resource terraform_data cache_volume {
     readWrite  = each.value.readWrite
   }
   provisioner local-exec {
-    interpreter = ["pwsh", "-NoProfile", "-NonInteractive", "-Command"]
+    interpreter = ["pwsh","-NoProfile","-NonInteractive","-Command"]
     command = <<-PWSH
       & "${path.module}/netappfiles.create.ps1" -cacheRequestUrl ${each.value.requestUrl} -cacheRequestBody '${jsonencode(each.value.requestBody)}'
     PWSH
     when = create
   }
   provisioner local-exec {
-    interpreter = ["pwsh", "-NoProfile", "-NonInteractive", "-Command"]
+    interpreter = ["pwsh","-NoProfile","-NonInteractive","-Command"]
     command = <<-PWSH
       & "${path.module}/netappfiles.destroy.ps1" -cacheRequestUrl ${self.output.requestUrl} -cacheReadWrite ${self.output.readWrite ? "$true" : "$false"}
     PWSH

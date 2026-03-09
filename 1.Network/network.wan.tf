@@ -41,7 +41,7 @@ variable virtualWAN {
       connections = list(object({
         enable     = bool
         name       = string
-        vwHubName  = string
+        hubName    = string
         scaleUnits = number
         siteToSite = object({
           enable       = bool
@@ -105,9 +105,15 @@ resource azurerm_virtual_hub main {
 
 resource azurerm_virtual_hub_connection main {
   for_each = {
-    for virtualNetwork in local.virtualNetworks : virtualNetwork.key => virtualNetwork if var.virtualWAN.enable && virtualNetwork.vwHubName != ""
+    for virtualNetwork in local.virtualNetworks : virtualNetwork.key => virtualNetwork if var.virtualWAN.enable
   }
   name                      = each.value.key
   remote_virtual_network_id = each.value.id
-  virtual_hub_id            = azurerm_virtual_hub.main[each.value.vwHubName].id
+  virtual_hub_id            = azurerm_virtual_hub.main[each.value.hubName].id
+  internet_security_enabled = true
+  routing {
+    propagated_route_table {
+      labels = ["default"]
+    }
+  }
 }

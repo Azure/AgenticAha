@@ -25,6 +25,9 @@ terraform {
 
 provider azurerm {
   features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
     netapp {
       prevent_volume_destruction             = var.netAppFiles.volumeDestruction.prevent
       delete_backups_on_backup_vault_destroy = false
@@ -119,10 +122,6 @@ variable activeDirectory {
 data azurerm_subscription current {}
 
 data azurerm_client_config current {}
-
-data azurerm_location main {
-  location = data.azurerm_virtual_network.main.location
-}
 
 data terraform_remote_state foundation {
   backend = "local"

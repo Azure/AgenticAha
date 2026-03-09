@@ -10,9 +10,9 @@ resource azurerm_vpn_gateway main {
     for connection in var.virtualWAN.vpnGateway.connections : connection.name => connection if var.virtualWAN.enable && var.virtualWAN.vpnGateway.enable && connection.siteToSite.enable && connection.enable
   }
   name                = "${var.virtualWAN.vpnGateway.name}-${each.value.name}"
-  resource_group_name = azurerm_virtual_hub.main[each.value.vwHubName].resource_group_name
-  location            = azurerm_virtual_hub.main[each.value.vwHubName].location
-  virtual_hub_id      = azurerm_virtual_hub.main[each.value.vwHubName].id
+  resource_group_name = azurerm_virtual_hub.main[each.value.hubName].resource_group_name
+  location            = azurerm_virtual_hub.main[each.value.hubName].location
+  virtual_hub_id      = azurerm_virtual_hub.main[each.value.hubName].id
   scale_unit          = each.value.scaleUnits
 }
 
@@ -21,8 +21,8 @@ resource azurerm_vpn_site main {
     for connection in var.virtualWAN.vpnGateway.connections : connection.name => connection if var.virtualWAN.enable && var.virtualWAN.vpnGateway.enable && connection.siteToSite.enable && connection.enable
   }
   name                = "${var.virtualWAN.vpnGateway.name}-${each.value.name}"
-  resource_group_name = azurerm_virtual_hub.main[each.value.vwHubName].resource_group_name
-  location            = azurerm_virtual_hub.main[each.value.vwHubName].location
+  resource_group_name = azurerm_virtual_hub.main[each.value.hubName].resource_group_name
+  location            = azurerm_virtual_hub.main[each.value.hubName].location
   virtual_wan_id      = azurerm_virtual_wan.main[0].id
   address_cidrs       = each.value.siteToSite.addressSpace
   dynamic link {
@@ -51,8 +51,8 @@ resource azurerm_vpn_server_configuration main {
     for connection in var.virtualWAN.vpnGateway.connections : connection.name => connection if var.virtualWAN.enable && var.virtualWAN.vpnGateway.enable && connection.pointToSite.enable && connection.enable
   }
   name                     = "${var.virtualWAN.vpnGateway.name}-${each.value.name}"
-  resource_group_name      = azurerm_virtual_hub.main[each.value.vwHubName].resource_group_name
-  location                 = azurerm_virtual_hub.main[each.value.vwHubName].location
+  resource_group_name      = azurerm_virtual_hub.main[each.value.hubName].resource_group_name
+  location                 = azurerm_virtual_hub.main[each.value.hubName].location
   vpn_protocols            = ["OpenVPN"]
   vpn_authentication_types = ["AAD"]
   azure_active_directory_authentication {
@@ -67,9 +67,9 @@ resource azurerm_point_to_site_vpn_gateway main {
     for connection in var.virtualWAN.vpnGateway.connections : connection.name => connection if var.virtualWAN.enable && var.virtualWAN.vpnGateway.enable && connection.pointToSite.enable && connection.enable
   }
   name                        = "${var.virtualWAN.vpnGateway.name}-${each.value.name}"
-  resource_group_name         = azurerm_virtual_hub.main[each.value.vwHubName].resource_group_name
-  location                    = azurerm_virtual_hub.main[each.value.vwHubName].location
-  virtual_hub_id              = azurerm_virtual_hub.main[each.value.vwHubName].id
+  resource_group_name         = azurerm_virtual_hub.main[each.value.hubName].resource_group_name
+  location                    = azurerm_virtual_hub.main[each.value.hubName].location
+  virtual_hub_id              = azurerm_virtual_hub.main[each.value.hubName].id
   vpn_server_configuration_id = azurerm_vpn_server_configuration.main[each.value.name].id
   scale_unit                  = each.value.scaleUnits
   connection_configuration {

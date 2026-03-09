@@ -33,7 +33,7 @@ storageAccounts = [
     }
   },
   {
-    enable               = true
+    enable               = false
     name                 = "aihpc2"      # Name must be globally unique (lowercase alphanumeric)
     type                 = "FileStorage" # https://learn.microsoft.com/azure/storage/common/storage-account-overview
     tier                 = "Premium"     # https://learn.microsoft.com/azure/storage/common/storage-account-overview#performance-tiers
@@ -160,23 +160,36 @@ netAppFiles = {
 ######################################################################################################
 
 lustreFiles = {
-  enable  = false
+  enable  = true
   name    = "aihpc"
   type    = "AMLFS-Durable-Premium-40" # https://learn.microsoft.com/azure/azure-managed-lustre/create-file-system-resource-manager#file-system-type-and-size-options
   sizeTiB = 48
+  rootSquash = {
+    enable  = false
+    mode    = "RootOnly"
+    userId  = 0
+    groupId = 0
+    trustedIps = [
+    ]
+  }
   blobStorage = {
-    enable            = true
+    enable            = false
     accountName       = "aihpc1"
     resourceGroupName = "HPC.Storage"
     containerName = {
-      archive = "lustre-archive"
-      logging = "lustre-logging"
+      file = "lustre-file"
+      log  = "lustre-log"
     }
-    importPrefix = "/"
+    fileImport = {
+      prefix = "/"
+    }
   }
   maintenanceWindow = {
     dayOfWeek    = "Sunday"
     utcStartTime = "00:00"
+  }
+  availabilityZone = {
+    id = 1
   }
 }
 

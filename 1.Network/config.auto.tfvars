@@ -11,7 +11,7 @@ hubVirtualNetworks = [
   {
     enable    = true
     name      = "HPC"
-    vwHubName = "US"
+    hubName   = "US"
     groupName = "USSouthCentral"
     location  = "SouthCentralUS"
     addressSpace = [
@@ -134,7 +134,7 @@ hubVirtualNetworks = [
         serviceDelegation = null
       },
       {
-        name = "CycleCloud"
+        name = "AKS"
         addressSpace = [
           "10.0.198.0/24"
         ]
@@ -143,18 +143,9 @@ hubVirtualNetworks = [
         serviceDelegation = null
       },
       {
-        name = "AKS"
-        addressSpace = [
-          "10.0.199.0/24"
-        ]
-        serviceEndpoints = [
-        ]
-        serviceDelegation = null
-      },
-      {
         name = "AppGateway"
         addressSpace = [
-          "10.0.200.0/24"
+          "10.0.199.0/24"
         ]
         serviceEndpoints = [
         ]
@@ -168,7 +159,7 @@ hubVirtualNetworks = [
       {
         name = "APIManagement"
         addressSpace = [
-          "10.0.201.0/24"
+          "10.0.200.0/24"
         ]
         serviceEndpoints = [
         ]
@@ -183,7 +174,7 @@ hubVirtualNetworks = [
       {
         name = "AICore"
         addressSpace = [
-          "10.0.202.0/24"
+          "10.0.201.0/24"
         ]
         serviceEndpoints = [
         ]
@@ -192,7 +183,7 @@ hubVirtualNetworks = [
       {
         name = "AIAgent"
         addressSpace = [
-          "10.0.203.0/24"
+          "10.0.202.0/24"
         ]
         serviceEndpoints = [
         ]
@@ -202,6 +193,15 @@ hubVirtualNetworks = [
             "Microsoft.Network/virtualNetworks/subnets/join/action"
           ]
         }
+      },
+      {
+        name = "CycleCloud"
+        addressSpace = [
+          "10.0.203.0/26"
+        ]
+        serviceEndpoints = [
+        ]
+        serviceDelegation = null
       },
       {
         name = "GatewaySubnet"
@@ -246,7 +246,7 @@ hubVirtualNetworks = [
 spokeVirtualNetworks = [
   {
     enable    = true
-    vwHubName = ""
+    hubName   = "US"
     groupName = "USWest"
     location  = "WestUS"
     addressSpace = {
@@ -263,17 +263,17 @@ spokeVirtualNetworks = [
       routes = [
         {
           enable         = true
-          name           = "Firewall"
+          name           = "Internet"
           addressPrefix  = "0.0.0.0/0"
           nextHopType    = "VirtualAppliance"
-          nextHopAddress = "10.0.255.4"
+          nextHopAddress = ""
         }
       ]
     }
   },
   {
     enable    = true
-    vwHubName = ""
+    hubName   = "US"
     groupName = "USWest"
     location  = "WestUS"
     addressSpace = {
@@ -290,17 +290,17 @@ spokeVirtualNetworks = [
       routes = [
         {
           enable         = true
-          name           = "Firewall"
+          name           = "Internet"
           addressPrefix  = "0.0.0.0/0"
           nextHopType    = "VirtualAppliance"
-          nextHopAddress = "10.0.255.4"
+          nextHopAddress = ""
         }
       ]
     }
   },
   {
     enable    = true
-    vwHubName = ""
+    hubName   = "US"
     groupName = "USCentral"
     location  = "CentralUS"
     addressSpace = {
@@ -317,17 +317,17 @@ spokeVirtualNetworks = [
       routes = [
         {
           enable         = true
-          name           = "Firewall"
+          name           = "Internet"
           addressPrefix  = "0.0.0.0/0"
-          nextHopType    = "VirtualAppliance"
-          nextHopAddress = "10.0.255.4"
+          nextHopType    = "None"
+          nextHopAddress = ""
         }
       ]
     }
   },
   {
     enable    = true
-    vwHubName = ""
+    hubName   = "US"
     groupName = "USEast"
     location  = "EastUS"
     addressSpace = {
@@ -344,17 +344,17 @@ spokeVirtualNetworks = [
       routes = [
         {
           enable         = true
-          name           = "Firewall"
+          name           = "Internet"
           addressPrefix  = "0.0.0.0/0"
           nextHopType    = "VirtualAppliance"
-          nextHopAddress = "10.0.255.4"
+          nextHopAddress = ""
         }
       ]
     }
   },
   {
     enable    = true
-    vwHubName = ""
+    hubName   = "US"
     groupName = "USEast"
     location  = "EastUS2"
     addressSpace = {
@@ -371,10 +371,10 @@ spokeVirtualNetworks = [
       routes = [
         {
           enable         = true
-          name           = "Firewall"
+          name           = "Internet"
           addressPrefix  = "0.0.0.0/0"
           nextHopType    = "VirtualAppliance"
-          nextHopAddress = "10.0.255.4"
+          nextHopAddress = ""
         }
       ]
     }
@@ -426,7 +426,7 @@ virtualWAN = {
       {
         enable     = true
         name       = "vpn"
-        vwHubName  = "US"
+        hubName    = "US"
         scaleUnits = 1
         siteToSite = {
           enable = false
@@ -508,10 +508,10 @@ privateDNS = {
     }
   }
   resolver = {
-    enable = true
+    enable = false
     name   = "aihpc"
     inbound = {
-      enable = true
+      enable = false
       name   = "aihpc-in"
       subnet = {
         name = "DNSIn"
@@ -546,6 +546,7 @@ firewall = {
 
 bastion = {
   enable              = true
+  name                = "Bastion"
   type                = "Standard"
   scaleUnits          = 2
   enableFileCopy      = true
@@ -554,6 +555,11 @@ bastion = {
   enableTunneling     = true
   enableShareableLink = false
   enableSessionRecord = false
+  virtualNetwork = {
+    enable            = false
+    name              = "HPC"
+    resourceGroupName = "HPC.Network.CentralUS"
+  }
 }
 
 ##########################################################################################################################
@@ -575,7 +581,7 @@ natGateway = {
 ################################################################################################################
 
 networkPeering = {
-  enable                      = true
+  enable                      = false
   allowRemoteNetworkAccess    = true
   allowRemoteForwardedTraffic = true
   allowGatewayTransit         = true
@@ -588,11 +594,21 @@ networkPeering = {
 networkSecurityPerimeter = {
   name        = "aihpc"
   profileName = "default"
-  accessMode = {
-    keyVault       = "Enforced"
-    storageAccount = "Enforced"
-    logAnalytics   = "Enforced"
-    appInsights    = "Enforced"
+  keyVault = {
+    enable     = true
+    accessMode = "Enforced"
+  }
+  storageAccount = {
+    enable     = true
+    accessMode = "Enforced"
+  }
+  logAnalytics = {
+    enable     = true
+    accessMode = "Enforced"
+  }
+  appInsights = {
+    enable     = false
+    accessMode = "Enforced"
   }
   diagnosticSetting = {
     enable = false

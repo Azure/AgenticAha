@@ -60,8 +60,8 @@ resource azurerm_storage_account main {
   }
   blob_properties {
     cors_rule {
-      allowed_origins    = ["https://studio.discovery.microsoft.com", "https://vscode.dev", "https://*.vscode-cnd.net"]
-      allowed_methods    = ["GET", "HEAD", "PUT", "DELETE"]
+      allowed_origins    = ["https://studio.discovery.microsoft.com","https://vscode.dev","https://*.vscode-cnd.net"]
+      allowed_methods    = ["GET","HEAD","PUT","DELETE"]
       allowed_headers    = ["*"]
       exposed_headers    = ["*"]
       max_age_in_seconds = 200

@@ -67,7 +67,7 @@ if [[ $jobSchedulers == *Slurm* ]]; then
   dnf -y install slurm
 
   echo "(AAA Start): Slurm Download"
-  appVersion="25.11.2"
+  appVersion="25.11.3"
   fileName="slurm-$appVersion.tar.bz2"
   fileLink="https://download.schedmd.com/slurm/$fileName"
   download_file $fileName $fileLink false

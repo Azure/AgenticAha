@@ -9,7 +9,7 @@ data azurerm_virtual_machine ccws {
   for_each = {
     for ccwsCluster in local.ccwsClusters : ccwsCluster.resourceGroup.value => ccwsCluster
   }
-  name                = var.ccWorkspace.cycleCloud.name
+  name                = each.value.ccVMName.value
   resource_group_name = each.value.resourceGroup.value
   depends_on = [
     terraform_data.ccws
@@ -20,7 +20,7 @@ resource azurerm_network_interface ccws_init {
   for_each = {
     for ccwsCluster in local.ccwsClusters : ccwsCluster.resourceGroup.value => ccwsCluster
   }
-  name                = "${var.ccWorkspace.cycleCloud.name}-init"
+  name                = "${each.value.ccVMName.value}-init"
   resource_group_name = each.value.resourceGroup.value
   location            = each.value.location.value
   ip_configuration {
@@ -38,7 +38,7 @@ resource azurerm_linux_virtual_machine ccws_init {
   for_each = {
     for ccwsCluster in local.ccwsClusters : ccwsCluster.resourceGroup.value => ccwsCluster
   }
-  name                            = "${var.ccWorkspace.cycleCloud.name}-init"
+  name                            = "${each.value.ccVMName.value}-init"
   resource_group_name             = each.value.resourceGroup.value
   location                        = each.value.location.value
   size                            = var.ccWorkspace.initMachine.size
@@ -83,7 +83,7 @@ resource azurerm_virtual_machine_extension ccws_init {
   for_each = {
     for ccwsCluster in local.ccwsClusters : ccwsCluster.resourceGroup.value => ccwsCluster
   }
-  name                       = "${var.ccWorkspace.cycleCloud.name}-init"
+  name                       = "${each.value.ccVMName.value}-init"
   type                       = "CustomScript"
   publisher                  = "Microsoft.Azure.Extensions"
   type_handler_version       = "2.1"
@@ -116,7 +116,7 @@ resource terraform_data ccws_init {
     for ccwsCluster in local.ccwsClusters : ccwsCluster.resourceGroup.value => ccwsCluster if var.ccWorkspace.initMachine.autoDelete.enable
   }
   provisioner local-exec {
-    interpreter = ["pwsh", "-NoProfile", "-NonInteractive", "-Command"]
+    interpreter = ["pwsh","-NoProfile","-NonInteractive","-Command"]
     command = <<-PWSH
       & "${path.module}/ccws.delete.ps1" -resourceGroupName ${each.value.resourceGroup.value} -virtualMachineName ${azurerm_linux_virtual_machine.ccws_init[each.value.resourceGroup.value].name}
     PWSH

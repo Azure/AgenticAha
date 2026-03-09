@@ -49,10 +49,6 @@ resource azurerm_firewall_policy_rule_collection_group main {
   }
 }
 
-############################
-# Virtual Network Firewall #
-############################
-
 resource azurerm_public_ip virtual_network {
   count               = var.firewall.enable && !var.firewall.virtualWAN.enable ? 1 : 0
   name                = var.firewall.name
@@ -92,12 +88,12 @@ resource azurerm_firewall virtual_network {
   ]
 }
 
-########################
-# Virtual WAN Firewall #
-########################
+###############################################################################################
+# Secure Virtual Hub (https://learn.microsoft.com/azure/firewall-manager/secured-virtual-hub) #
+###############################################################################################
 
 resource azurerm_firewall virtual_wan {
-  count               = var.firewall.enable && var.firewall.virtualWAN.enable && var.virtualWAN.enable ? 1 : 0
+  count               = var.firewall.enable && var.firewall.virtualWAN.enable ? 1 : 0
   name                = var.firewall.name
   resource_group_name = azurerm_virtual_wan.main[0].resource_group_name
   location            = azurerm_virtual_wan.main[0].location
@@ -106,5 +102,16 @@ resource azurerm_firewall virtual_wan {
   sku_name            = "AZFW_Hub"
   virtual_hub {
     virtual_hub_id = azurerm_virtual_hub.main[local.virtualNetwork.hubName].id
+  }
+}
+
+resource azurerm_virtual_hub_routing_intent virtual_wan {
+  count          = var.firewall.enable && var.firewall.virtualWAN.enable ? 1 : 0
+  name           = var.firewall.name
+  virtual_hub_id = azurerm_firewall.virtual_wan[0].virtual_hub[0].virtual_hub_id
+  routing_policy {
+    name         = "InternetTrafficPolicy"
+    destinations = ["Internet"]
+    next_hop     = azurerm_firewall.virtual_wan[0].id
   }
 }

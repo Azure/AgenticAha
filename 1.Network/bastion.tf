@@ -8,6 +8,7 @@
 variable bastion {
   type = object({
     enable              = bool
+    name                = string
     type                = string
     scaleUnits          = number
     enableFileCopy      = bool
@@ -16,16 +17,23 @@ variable bastion {
     enableTunneling     = bool
     enableShareableLink = bool
     enableSessionRecord = bool
+    virtualNetwork = object({
+      enable            = bool
+      name              = string
+      resourceGroupName = string
+    })
   })
 }
 
-locals {
-  bastionNetworks = var.bastion.enable ? [local.virtualNetwork] : []
+data azurerm_virtual_network bastion {
+  count               = var.bastion.enable ? 1 : 0
+  name                = var.bastion.virtualNetwork.enable ? var.bastion.virtualNetwork.name : local.virtualNetwork.name
+  resource_group_name = var.bastion.virtualNetwork.enable ? var.bastion.virtualNetwork.resourceGroupName : local.virtualNetwork.resourceGroup.name
 }
 
 resource azurerm_network_security_group bastion {
   for_each = {
-    for subnet in local.virtualNetworksSubnetsSecurity : subnet.key => subnet if subnet.name == "AzureBastionSubnet"
+    for subnet in local.virtualNetworksSubnetsSecurity : subnet.key => subnet if subnet.name == "AzureBastionSubnet" && var.bastion.enable
   }
   name                = each.value.key
   resource_group_name = each.value.resourceGroup.name
@@ -144,12 +152,10 @@ resource azurerm_subnet_network_security_group_association bastion {
 }
 
 resource azurerm_public_ip bastion {
-  for_each = {
-    for virtualNetwork in local.bastionNetworks : virtualNetwork.key => virtualNetwork if var.bastion.type != "Developer"
-  }
-  name                = "Bastion"
-  resource_group_name = each.value.resourceGroup.name
-  location            = each.value.location
+  count               = var.bastion.enable ? 1 : 0
+  name                = var.bastion.name
+  resource_group_name = data.azurerm_virtual_network.bastion[0].resource_group_name
+  location            = data.azurerm_virtual_network.bastion[0].location
   sku                 = "Standard"
   allocation_method   = "Static"
   depends_on = [
@@ -163,12 +169,10 @@ resource azurerm_public_ip bastion {
 }
 
 resource azurerm_bastion_host main {
-  for_each = {
-    for virtualNetwork in local.bastionNetworks : virtualNetwork.key => virtualNetwork
-  }
-  name                      = "Bastion"
-  resource_group_name       = each.value.resourceGroup.name
-  location                  = each.value.location
+  count                     = var.bastion.enable ? 1 : 0
+  name                      = var.bastion.name
+  resource_group_name       = data.azurerm_virtual_network.bastion[0].resource_group_name
+  location                  = data.azurerm_virtual_network.bastion[0].location
   sku                       = var.bastion.type
   scale_units               = var.bastion.scaleUnits
   file_copy_enabled         = var.bastion.enableFileCopy
@@ -177,14 +181,10 @@ resource azurerm_bastion_host main {
   tunneling_enabled         = var.bastion.enableTunneling
   shareable_link_enabled    = var.bastion.enableShareableLink
   session_recording_enabled = var.bastion.enableSessionRecord
-  virtual_network_id        = var.bastion.type == "Developer" ? each.value.id : null
-  dynamic ip_configuration {
-    for_each = var.bastion.type != "Developer" ? [1] : []
-    content {
-      name                 = "ipConfig"
-      public_ip_address_id = azurerm_public_ip.bastion[each.value.key].id
-      subnet_id            = "${each.value.id}/subnets/AzureBastionSubnet"
-    }
+  ip_configuration {
+    name                 = "ipConfig"
+    public_ip_address_id = azurerm_public_ip.bastion[0].id
+    subnet_id            = "${data.azurerm_virtual_network.bastion[0].id}/subnets/AzureBastionSubnet"
   }
   depends_on = [
     azurerm_subnet.main

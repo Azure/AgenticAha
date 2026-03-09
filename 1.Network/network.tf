@@ -9,7 +9,7 @@ variable hubVirtualNetworks {
   type = list(object({
     enable       = bool
     name         = string
-    vwHubName    = string
+    hubName      = string
     groupName    = string
     location     = string
     addressSpace = list(string)
@@ -29,7 +29,7 @@ variable hubVirtualNetworks {
 variable spokeVirtualNetworks {
   type = list(object({
     enable    = bool
-    vwHubName = string
+    hubName   = string
     groupName = string
     location  = string
     addressSpace = object({
@@ -74,7 +74,7 @@ locals {
       key        = "${var.hubVirtualNetworks[0].name}-${virtualNetwork.location}${virtualNetwork.extendedZone.enable ? "-${virtualNetwork.extendedZone.name}" : ""}"
       id         = "/subscriptions/${data.azurerm_subscription.current.subscription_id}/resourceGroups/${var.resourceGroupName}.${virtualNetwork.location}${virtualNetwork.extendedZone.enable ? ".${virtualNetwork.extendedZone.name}" : ""}/providers/Microsoft.Network/virtualNetworks/${var.hubVirtualNetworks[0].name}"
       location   = virtualNetwork.location
-      vwHubName  = virtualNetwork.vwHubName
+      hubName    = virtualNetwork.hubName
       groupName  = virtualNetwork.groupName
       routeTable = virtualNetwork.routeTable
       addressSpace = [
@@ -109,7 +109,7 @@ locals {
     for subnet in local.virtualNetworksSubnets : subnet if subnet.name == "Storage"
   ]
   virtualNetworksSubnetsSecurity = [
-    for subnet in local.virtualNetworksSubnets : subnet if subnet.name != "GatewaySubnet" && subnet.name != "AzureFirewallSubnet" && subnet.name != "AzureFirewallManagementSubnet"
+    for subnet in local.virtualNetworksSubnets : subnet if !contains(["GatewaySubnet","AzureFirewallSubnet","AzureFirewallManagementSubnet"], subnet.name)
   ]
 }
 

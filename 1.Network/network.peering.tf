@@ -16,7 +16,7 @@ variable networkPeering {
 
 resource azurerm_virtual_network_peering hub_to_spoke {
   for_each = {
-    for virtualNetwork in local.spokeVirtualNetworks : virtualNetwork.key => virtualNetwork
+    for virtualNetwork in local.spokeVirtualNetworks : virtualNetwork.key => virtualNetwork if var.networkPeering.enable && !var.virtualWAN.enable
   }
   name                         = "${local.virtualNetwork.key}.${each.value.key}"
   resource_group_name          = local.virtualNetwork.resourceGroup.name
@@ -33,7 +33,7 @@ resource azurerm_virtual_network_peering hub_to_spoke {
 
 resource azurerm_virtual_network_peering spoke_to_hub {
   for_each = {
-    for virtualNetwork in local.spokeVirtualNetworks : virtualNetwork.key => virtualNetwork
+    for virtualNetwork in local.spokeVirtualNetworks : virtualNetwork.key => virtualNetwork if var.networkPeering.enable && !var.virtualWAN.enable
   }
   name                         = "${each.value.key}.${local.virtualNetwork.key}"
   resource_group_name          = each.value.resourceGroup.name

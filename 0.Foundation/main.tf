@@ -25,6 +25,9 @@ terraform {
 
 provider azurerm {
   features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
     application_insights {
       disable_generated_rule = false
     }
@@ -43,9 +46,6 @@ provider azurerm {
     }
     log_analytics_workspace {
       permanently_delete_on_destroy = false
-    }
-    resource_group {
-      prevent_deletion_if_contains_resources = false
     }
   }
   subscription_id     = var.subscriptionId

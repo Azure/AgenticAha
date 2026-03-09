@@ -11,7 +11,7 @@ virtualMachines = [
   {
     enable = false
     name   = "VDIUserXLGN"
-    size   = "Standard_NV72ads_A10_v5" # https://learn.microsoft.com/azure/virtual-machines/sizes
+    size   = "Standard_NV36ads_A10_v5" # https://learn.microsoft.com/azure/virtual-machines/sizes
     count  = 1
     image = {
       marketplace = {
@@ -119,7 +119,7 @@ virtualMachines = [
   {
     enable = false
     name   = "VDIUserAL"
-    size   = "Standard_E96ps_v6" # https://learn.microsoft.com/azure/virtual-machines/sizes
+    size   = "Standard_E32ps_v6" # https://learn.microsoft.com/azure/virtual-machines/sizes
     count  = 1
     image = {
       marketplace = {
@@ -173,7 +173,7 @@ virtualMachines = [
   {
     enable = false
     name   = "VDIUserXWGN"
-    size   = "Standard_NV72ads_A10_v5" # https://learn.microsoft.com/azure/virtual-machines/sizes
+    size   = "Standard_NV36ads_A10_v5" # https://learn.microsoft.com/azure/virtual-machines/sizes
     count  = 1
     image = {
       marketplace = {
@@ -281,7 +281,7 @@ virtualMachines = [
   {
     enable = false
     name   = "VDIUserAW"
-    size   = "Standard_E96ps_v6" # https://learn.microsoft.com/azure/virtual-machines/sizes
+    size   = "Standard_E32ps_v6" # https://learn.microsoft.com/azure/virtual-machines/sizes
     count  = 1
     image = {
       marketplace = {
@@ -333,6 +333,35 @@ virtualMachines = [
     }
   }
 ]
+
+###############################################################################
+# Cendio ThinLinc (https://marketplace.microsoft.com/product/cendio.thinlinc) #
+###############################################################################
+
+thinLinc = {
+  enable = false
+  name   = "aihpc"
+  size   = "Standard_NV36ads_A10_v5" # https://learn.microsoft.com/azure/virtual-machines/sizes
+  image = {
+    publisher = "Cendio"
+    product   = "ThinLinc"
+    name      = "ThinLinc-AlmaLinux-9"
+    version   = "Latest"
+  }
+  osDisk = {
+    storageType = "Premium_LRS"
+    cachingMode = "ReadWrite"
+    sizeGB      = 0
+  }
+  adminLogin = {
+    userName     = ""
+    userPassword = ""
+    sshKeyPublic = ""
+    passwordAuth = {
+      disable = true
+    }
+  }
+}
 
 ################################################################################
 # Virtual Desktop (https://learn.microsoft.com/azure/virtual-desktop/overview) #

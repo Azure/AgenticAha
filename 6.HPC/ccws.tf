@@ -15,18 +15,12 @@ variable ccWorkspace {
       })
     })
     cycleCloud = object({
-      name = string
-      size = string
-    })
-    scheduler = object({
-      size = string
-      image = object({
-        type = string
-        custom = object({
-          enable         = bool
-          definitionName = string
-          versionId      = string
-        })
+      cluster = object({
+        name = string
+      })
+      machine = object({
+        name = string
+        size = string
       })
     })
     loginNode = object({
@@ -41,11 +35,8 @@ variable ccWorkspace {
         })
       })
     })
-    openOnDemand = object({
-      enable       = bool
-      size         = string
-      userDomain   = string
-      startCluster = bool
+    scheduler = object({
+      size = string
       image = object({
         type = string
         custom = object({
@@ -107,6 +98,20 @@ variable ccWorkspace {
        })
       startCluster = bool
     })
+    openOnDemand = object({
+      enable       = bool
+      size         = string
+      userDomain   = string
+      startCluster = bool
+      image = object({
+        type = string
+        custom = object({
+          enable         = bool
+          definitionName = string
+          versionId      = string
+        })
+      })
+    })
     netAppFiles = object({
       address      = string
       exportPath   = string
@@ -165,11 +170,14 @@ locals {
     adminSshPublicKey = {
       value = data.azurerm_key_vault_secret.ssh_key_public.value
     }
+    clusterName = {
+      value = var.ccWorkspace.cycleCloud.cluster.name
+    }
     ccVMName = {
-      value = var.ccWorkspace.cycleCloud.name
+      value = var.ccWorkspace.cycleCloud.machine.name
     }
     ccVMSize = {
-      value = var.ccWorkspace.cycleCloud.size
+      value = var.ccWorkspace.cycleCloud.machine.size
     }
     sharedFilesystem = {
       value = {
@@ -258,7 +266,7 @@ locals {
     }
     ood = {
       value = {
-        type                 = var.ccWorkspace.openOnDemand.enable ? "enabled" : "disabled"
+        type                 = var.ccWorkspace.entraId.enable && var.ccWorkspace.openOnDemand.enable ? "enabled" : "disabled"
         sku                  = var.ccWorkspace.openOnDemand.size
         osImage              = var.ccWorkspace.openOnDemand.image.custom.enable ? "${data.azurerm_shared_image_gallery.main.id}/images/${var.ccWorkspace.openOnDemand.image.custom.definitionName}/versions/${var.ccWorkspace.openOnDemand.image.custom.versionId}" : var.ccWorkspace.openOnDemand.image.type
         userDomain           = var.ccWorkspace.openOnDemand.userDomain
@@ -312,12 +320,22 @@ locals {
   })
 }
 
+resource terraform_data mysql {
+  count = var.ccWorkspace.enable ? 1 : 0
+  provisioner local-exec {
+    command = "az mysql flexible-server start --resource-group ${var.mySqlFlexibleServer.resourceGroupName} --name ${var.mySqlFlexibleServer.name}"
+  }
+}
+
 resource local_file ccws {
   for_each = {
     for ccwsCluster in local.ccwsClusters : ccwsCluster.resourceGroup.value => ccwsCluster
   }
   filename = "${lower(each.value.resourceGroup.value)}.json"
   content  = jsonencode(each.value)
+  depends_on = [
+    terraform_data.mysql
+  ]
 }
 
 resource terraform_data ccws {
@@ -325,7 +343,7 @@ resource terraform_data ccws {
     for ccwsCluster in local.ccwsClusters : ccwsCluster.resourceGroup.value => ccwsCluster
   }
   provisioner local-exec {
-    interpreter = ["pwsh", "-NoProfile", "-NonInteractive", "-Command"]
+    interpreter = ["pwsh","-NoProfile","-NonInteractive","-Command"]
     command = <<-PWSH
       & "${path.module}/ccws.create.ps1" -regionName ${each.value.location.value} -resourceGroupName ${each.value.resourceGroup.value} -parameterConfigfile ${local_file.ccws[each.value.resourceGroup.value].filename}
     PWSH

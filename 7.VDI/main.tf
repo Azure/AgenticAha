@@ -158,6 +158,15 @@ resource azurerm_resource_group vdi {
   }
 }
 
+resource azurerm_resource_group vdi_thinlinc {
+  count    = var.thinLinc.enable ? 1 : 0
+  name     = "${var.resourceGroupName}.ThinLinc"
+  location = data.azurerm_virtual_network.main.location
+  tags = {
+    Module = basename(path.cwd)
+  }
+}
+
 resource azurerm_resource_group vdi_avd {
   count    = var.virtualDesktop.enable ? 1 : 0
   name     = "${var.resourceGroupName}.AVD"

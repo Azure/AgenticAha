@@ -6,7 +6,7 @@ resource azurerm_eventgrid_topic ccws {
   for_each = {
     for ccwsCluster in local.ccwsClusters : ccwsCluster.resourceGroup.value => ccwsCluster
   }
-  name                = var.ccWorkspace.cycleCloud.name
+  name                = each.value.ccVMName.value
   resource_group_name = each.value.resourceGroup.value
   location            = each.value.location.value
   identity {
