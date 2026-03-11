@@ -11,7 +11,7 @@ The following solution design principles and features are implemented throughout
 
 ## Typical Azure HPC & AI Cluster Architecture
 
-<img src="https://github.com/user-attachments/assets/e27427a0-f666-45cd-a65a-688e32ddb389" />
+<img src="https://github.com/user-attachments/assets/e27427a0-f666-45cd-a65a-688e32ddb389" /><br/>
 
 | **Module Name** | **Module Description** | **Required for<br/>Burst Compute?<br/>(*On-Prem Storage*)** | **Required for<br/>Full Deployment?<br/>(*Compute & Storage*)** |
 | - | - | - | - |
