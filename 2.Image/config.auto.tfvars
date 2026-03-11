@@ -109,7 +109,7 @@ imageBuilder = {
         }
       }
       build = {
-        machineType  = "JobScheduler"
+        machineType  = "Scheduler"
         machineSize  = "Standard_D4as_v5" # https://learn.microsoft.com/azure/virtual-machines/sizes
         gpuProvider  = ""                 # NVIDIA or AMD
         architecture = "x86_64"           # x86_64 or aarch64
@@ -117,6 +117,28 @@ imageBuilder = {
         osDiskSizeGB = 1024
         jobSchedulers = [
           "Slurm"
+        ]
+        jobProcessors = [
+        ]
+        timeoutMinutes = 180
+      }
+    },
+    {
+      enable = true
+      name   = "VDIUserLoginXL"
+      source = {
+        imageDefinition = {
+          name = "x64Lnx"
+        }
+      }
+      build = {
+        machineType  = "VDI"
+        machineSize  = "Standard_D4as_v5" # https://learn.microsoft.com/azure/virtual-machines/sizes
+        gpuProvider  = ""                 # NVIDIA or AMD
+        architecture = "x86_64"           # x86_64 or aarch64
+        imageVersion = "1.1.0"
+        osDiskSizeGB = 1024
+        jobSchedulers = [
         ]
         jobProcessors = [
         ]

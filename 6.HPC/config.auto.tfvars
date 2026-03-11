@@ -32,7 +32,7 @@ ccWorkspace = {
       custom = {
         enable         = false
         definitionName = "x64Lnx"
-        versionId      = "3.0.0"
+        versionId      = "1.1.0"
       }
     }
   }
@@ -109,7 +109,7 @@ ccWorkspace = {
       custom = {
         enable         = false
         definitionName = "x64Lnx"
-        versionId      = "1.0.0"
+        versionId      = "3.0.0"
       }
     }
   }

@@ -140,7 +140,7 @@ if ($gpuProvider -eq "NVIDIA.GRID") {
 
 if ($gpuProvider.StartsWith("NVIDIA")) {
   Write-Information "(AAA Start): NVIDIA GPU (CUDA)"
-  $appVersion = "13.1.1"
+  $appVersion = "13.2.0"
   $fileType = "nvidia-gpu-cuda"
   $fileName = "cuda_${appVersion}_windows_network.exe"
   $fileLink = "https://developer.download.nvidia.com/compute/cuda/$appVersion/network_installers/$fileName"

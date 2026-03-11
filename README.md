@@ -4,10 +4,14 @@ Azure Agentic Aha (AAA) is a *modular and flexible* [Infrastructure as Code (IaC
 
 The following solution design principles and features are implemented throughout the AAA deployment framework.
 * Defense-in-depth layered security with core service integration across [Managed Identity](https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview), [Key Vault](https://learn.microsoft.com/azure/key-vault/general/overview), [Private Link](https://learn.microsoft.com/azure/private-link/private-link-overview),</br>[Private Endpoints](https://learn.microsoft.com/azure/private-link/private-endpoint-overview), [Network Security Groups](https://learn.microsoft.com/azure/virtual-network/network-security-groups-overview), [Network Security Perimeter](https://learn.microsoft.com/azure/private-link/network-security-perimeter-concepts), [NAT Gateway](https://learn.microsoft.com/azure/nat-gateway/nat-overview), [Bastion](https://learn.microsoft.com/azure/bastion/bastion-overview), [Firewall](https://learn.microsoft.com/azure/firewall/overview), etc
-* Integration of [Monitor](https://learn.microsoft.com/azure/azure-monitor/fundamentals/overview) data collection and log analytics workspace with [Managed Grafana](https://learn.microsoft.com/azure/managed-grafana/overview) data visualization
+* Integration of [Monitor](https://learn.microsoft.com/azure/azure-monitor/fundamentals/overview) data collection rules with log analytics workspace and [Managed Grafana](https://learn.microsoft.com/azure/managed-grafana/overview) visualization
+* Multi-Region and [Extended Zone](https://learn.microsoft.com/azure/extended-zones/overview) deployments are supported via a spoke [Virtual Network](https://learn.microsoft.com/azure/virtual-network/virtual-networks-overview) per region or zone
 * Any 3<sup>rd</sup>-party or custom application software is supported in a custom [Compute Gallery](https://learn.microsoft.com/azure/virtual-machines/azure-compute-gallery) virtual machine image
-* Multi-Region and [Extended Zone](https://learn.microsoft.com/azure/extended-zones/overview) deployments are supported via a peered [Virtual Network](https://learn.microsoft.com/azure/virtual-network/virtual-networks-overview) per region or zone
 * Clean separation of module *configuration* files (**config.auto.tfvars**) and *implementation* files (**\*.tf**) via [Terraform](https://learn.microsoft.com/azure/developer/terraform/overview)
+
+## Typical Azure HPC & AI Cluster Architecture
+
+<img src="https://github.com/user-attachments/assets/e27427a0-f666-45cd-a65a-688e32ddb389" />
 
 | **Module Name** | **Module Description** | **Required for<br/>Burst Compute?<br/>(*On-Prem Storage*)** | **Required for<br/>Full Deployment?<br/>(*Compute & Storage*)** |
 | - | - | - | - |
