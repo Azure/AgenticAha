@@ -61,6 +61,9 @@ ccWorkspace = {
             versionId      = "2.0.0"
           }
         }
+        availabilityZone = [
+          "1"
+        ]
       }
       htc = {
         nodeSize = "Standard_D16as_v5"
@@ -74,6 +77,9 @@ ccWorkspace = {
             versionId      = "2.0.0"
           }
         }
+        availabilityZone = [
+          "1"
+        ]
       }
       gpu = {
         nodeSize = "Standard_NC40ads_H100_v5"
@@ -86,6 +92,9 @@ ccWorkspace = {
             versionId      = "2.3.0"
           }
         }
+        availabilityZone = [
+          "1"
+        ]
       }
     }
     jobAccounting = {

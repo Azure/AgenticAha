@@ -1,0 +1,917 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "contactName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name to associate with the Leostream license."
+            }
+        },
+        "adminEmail": {
+            "type": "string",
+            "metadata": {
+                "description": "Email address to associate with the Leostream license."
+            }
+        },
+        "linuxVmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D2s_v3",
+            "metadata": {
+                "description": "Size of the Gateway and Connection Broker."
+            }
+        },
+        "desktopVmSize": {
+            "type": "string",
+            "defaultValue": "Standard_NV6ads_A10_v5",
+            "metadata": {
+                "description": "Size of the desktop."
+            }
+        },
+        "desktopImageType": {
+            "type": "string",
+            "defaultValue": "windows",
+            "allowedValues": [
+                "windows",
+                "linux"
+            ],
+            "metadata": {
+                "description": "Operating system type for the desktop VM (windows or linux)."
+            }
+        },
+        "adminPassword": {
+            "type": "secureString",
+            "metadata": {
+                "description": "Password for the admin user across all VMs."
+            }
+        },
+        "leoAdminPassword": {
+            "type": "secureString",
+            "metadata": {
+                "description": "Password for the admin user on the leostream web UI."
+            }
+        },
+        "leostreamVnet": {
+            "type": "object",
+            "metadata": {
+                "description": "Leostream virtual network and subnet details."
+            }
+        },
+        "vnetresourceGroup": {
+            "type": "string",
+            "metadata": {
+                "description": "Resource Group of the vnet."
+            }
+        },
+        "vnetNewOrExisting": {
+            "type": "string",
+            "metadata": {
+                "description": "New or existing vnet."
+            }
+        },
+        "virtualMachines_LeostreamGW_name": {
+            "defaultValue": "LeostreamGW",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Leostream Gateway virtual machine."
+            }
+        },
+        "virtualMachines_Leostream_CB_name": {
+            "defaultValue": "LeostreamCB",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Leostream Connection Broker virtual machine."
+            }
+        },
+        "publicIPAddresses_Leostream_GW_ip_name": {
+            "defaultValue": "Leostream-GW-ip",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the public IP address for the Leostream Gateway."
+            }
+        },
+        "networkInterfaces_leostream_gw_name": {
+            "defaultValue": "leostream_gw",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the network interface for the Leostream Gateway."
+            }
+        },
+        "networkInterfaces_leostream_cb_name": {
+            "defaultValue": "leostream_cb",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the network interface for the Leostream Connection Broker."
+            }
+        },
+        "networkSecurityGroups_Leostream_GW_nsg_name": {
+            "defaultValue": "Leostream-GW-nsg",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the network security group for the Leostream Gateway."
+            }
+        },
+        "networkSecurityGroups_Leostream_CB_nsg_name": {
+            "defaultValue": "Leostream-CB-nsg",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the network security group for the Leostream Connection Broker."
+            }
+        },
+        "virtualMachines_Leostream_Desktop_name": {
+            "defaultValue": "Leo-desktop",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Leostream Desktop virtual machine."
+            }
+        },
+        "networkInterfaces_leostream_desktop_name": {
+            "defaultValue": "Leo-desktop",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the network interface for the Leostream Desktop."
+            }
+        },
+        "networkSecurityGroups_Leostream_Desktop_nsg_name": {
+            "defaultValue": "Leo-desktop-nsg",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the network security group for the Leostream Desktop."
+            }
+        },
+        "cbImageId": {
+            "defaultValue": "[format('/CommunityGalleries/{0}/Images/{1}/Versions/{2}', 'Leostream-522ad006-fa58-40bc-a5f5-2ab0e94fe08e', 'Leostream-Connection-Broker-2025', '0.0.1')]",
+            "type": "String"
+        },
+        "gwImageId": {
+            "defaultValue": "[format('/CommunityGalleries/{0}/Images/{1}/Versions/{2}', 'Leostream-522ad006-fa58-40bc-a5f5-2ab0e94fe08e', 'Leostream-Gateway', '0.0.2')]",
+            "type": "String"
+        },
+        "desktopImageIdWinSCSI": {
+            "defaultValue": "[format('/CommunityGalleries/{0}/Images/{1}/Versions/{2}', 'Leostream-522ad006-fa58-40bc-a5f5-2ab0e94fe08e', 'Leostream-Win-Desktop-SCSI', '0.0.1')]",
+            "type": "String"
+        },
+        "desktopImageIdWinNVMe": {
+            "defaultValue": "[format('/CommunityGalleries/{0}/Images/{1}/Versions/{2}', 'Leostream-522ad006-fa58-40bc-a5f5-2ab0e94fe08e', 'Leostream-Win-Desktop-NVMe', '0.0.1')]",
+            "type": "String"
+        },
+        "desktopImageIdLinuxSCSI": {
+            "defaultValue": "[format('/CommunityGalleries/{0}/Images/{1}/Versions/{2}', 'Leostream-522ad006-fa58-40bc-a5f5-2ab0e94fe08e', 'Leostream-Linux-Desktop-SCSI', '0.0.1')]",
+            "type": "String"
+        },
+        "desktopImageIdLinuxNVMe": {
+            "defaultValue": "[format('/CommunityGalleries/{0}/Images/{1}/Versions/{2}', 'Leostream-522ad006-fa58-40bc-a5f5-2ab0e94fe08e', 'Leostream-Linux-Desktop-NVMe', '0.0.1')]",
+            "type": "String"
+        }
+    },
+    "variables": {
+        "desktopDiskControllerType": "[if(or(contains(parameters('desktopVmSize'), '_v6'), contains(parameters('desktopVmSize'), '_v7')), 'NVMe', 'SCSI')]",
+        "desktopImageId": "[if(equals(parameters('desktopImageType'), 'windows'), if(equals(variables('desktopDiskControllerType'), 'NVMe'), parameters('desktopImageIdWinNVMe'), parameters('desktopImageIdWinSCSI')), if(equals(variables('desktopDiskControllerType'), 'NVMe'), parameters('desktopImageIdLinuxNVMe'), parameters('desktopImageIdLinuxSCSI')))]",
+        "cbNic": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_leostream_cb_name'))]",
+        "gwNic": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_leostream_gw_name'))]",
+        "desktopNic": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_leostream_desktop_name'))]",
+        "cbVm": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_Leostream_CB_name'))]",
+        "desktopVm": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_Leostream_Desktop_name'))]",
+        "cbHttpsRuleId": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', parameters('networkSecurityGroups_Leostream_CB_nsg_name'), 'HTTPS')]",
+        "gwHttpsRuleId": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', parameters('networkSecurityGroups_Leostream_GW_nsg_name'), 'HTTPS')]",
+        "gwHttpRuleId": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', parameters('networkSecurityGroups_Leostream_GW_nsg_name'), 'HTTP')]",
+        "gwProtocolTrafficRuleId": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', parameters('networkSecurityGroups_Leostream_GW_nsg_name'), 'GatewayProtocolTraffic')]",
+        "desktopRdpRuleId": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', parameters('networkSecurityGroups_Leostream_Desktop_nsg_name'), 'RDP')]",
+        "nicDesktopIpconfig1": "[resourceId('Microsoft.Network/networkInterfaces/ipConfigurations', parameters('networkInterfaces_leostream_desktop_name'), 'ipconfig1')]",
+        "nicCbIpconfig1": "[resourceId('Microsoft.Network/networkInterfaces/ipConfigurations', parameters('networkInterfaces_leostream_cb_name'), 'ipconfig1')]",
+        "nicGwIpconfig1": "[resourceId('Microsoft.Network/networkInterfaces/ipConfigurations', parameters('networkInterfaces_leostream_gw_name'), 'ipconfig1')]",
+        "subnet1Id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('leostreamVnet').name, parameters('leostreamVnet').subnets.subnet1.name)]",
+        "subnet2Id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('leostreamVnet').name, parameters('leostreamVnet').subnets.subnet2.name)]",
+        "gwNsgID": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_Leostream_GW_nsg_name'))]",
+        "cbNsgID": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_Leostream_CB_nsg_name'))]",
+        "desktopNsgID": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_Leostream_Desktop_nsg_name'))]",
+        "gwPublicIp": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_Leostream_GW_ip_name'))]",
+        "desktopContributorRoleName": "[guid(resourceGroup().id, parameters('virtualMachines_Leostream_Desktop_name'), 'contributor-role')]",
+        "desktopReaderRoleName": "[guid(resourceGroup().id, parameters('networkInterfaces_leostream_desktop_name'), 'reader-role')]",
+        "contributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "readerRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2023-06-01",
+            "name": "[parameters('leostreamVnet').name]",
+            "location": "[parameters('location')]",
+            "condition": "[equals(parameters('vnetNewOrExisting'), 'new')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[parameters('leostreamVnet').addressPrefixes]"
+                },
+                "encryption": {
+                    "enabled": false,
+                    "enforcement": "AllowUnencrypted"
+                },
+                "privateEndpointVNetPolicies": "Disabled",
+                "subnets": [
+                    {
+                        "name": "[parameters('leostreamVnet').subnets.subnet1.name]",
+                        "properties": {
+                            "addressPrefix": "[parameters('leostreamVnet').subnets.subnet1.addressPrefix]",
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "[parameters('leostreamVnet').subnets.subnet2.name]",
+                        "properties": {
+                            "addressPrefix": "[parameters('leostreamVnet').subnets.subnet2.addressPrefix]",
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    }
+                ],
+                "enableDdosProtection": false
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2023-07-01",
+            "name": "pid-435487d7-13b2-4b28-9987-b9313ac25057-partnercenter",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": []
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2023-07-01",
+            "name": "addSubnetToExistingVnet",
+            "resourceGroup": "[parameters('vnetresourceGroup')]",
+            "condition": "[not(equals(parameters('vnetNewOrExisting'), 'new'))]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                        {
+                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                            "apiVersion": "2024-05-01",
+                            "name": "[format('{0}/{1}', parameters('leostreamVnet').name, parameters('leostreamVnet').subnets.subnet1.name)]",
+                            "condition": "[equals(length(filter(reference(resourceId(parameters('vnetresourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('leostreamVnet').name), '2023-06-01').subnets, lambda('subnet', equals(lambdaVariables('subnet').name, parameters('leostreamVnet').subnets.subnet1.name)))), 0)]",
+                            "properties": {
+                                "addressPrefix": "[parameters('leostreamVnet').subnets.subnet1.addressPrefix]",
+                                "privateEndpointNetworkPolicies": "Disabled",
+                                "privateLinkServiceNetworkPolicies": "Enabled"
+                            }
+                        },
+                        {
+                            "type": "Microsoft.Network/virtualNetworks/subnets",
+                            "apiVersion": "2024-05-01",
+                            "name": "[format('{0}/{1}', parameters('leostreamVnet').name, parameters('leostreamVnet').subnets.subnet2.name)]",
+                            "condition": "[equals(length(filter(reference(resourceId(parameters('vnetresourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('leostreamVnet').name), '2023-06-01').subnets, lambda('subnet', equals(lambdaVariables('subnet').name, parameters('leostreamVnet').subnets.subnet2.name)))), 0)]",
+                            "properties": {
+                                "addressPrefix": "[parameters('leostreamVnet').subnets.subnet2.addressPrefix]",
+                                "privateEndpointNetworkPolicies": "Disabled",
+                                "privateLinkServiceNetworkPolicies": "Enabled"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2023-06-01",
+            "name": "[parameters('networkSecurityGroups_Leostream_CB_nsg_name')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "HTTPS",
+                        "id": "[variables('cbHttpsRuleId')]",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 340,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2023-06-01",
+            "name": "[parameters('networkSecurityGroups_Leostream_GW_nsg_name')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "HTTPS",
+                        "id": "[variables('gwHttpsRuleId')]",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 320,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "HTTP",
+                        "id": "[variables('gwHttpRuleId')]",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 340,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "GatewayProtocolTraffic",
+                        "id": "[variables('gwProtocolTrafficRuleId')]",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "20001-23000",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 350,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2023-06-01",
+            "name": "[parameters('publicIPAddresses_Leostream_GW_ip_name')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2023-09-01",
+            "name": "[parameters('virtualMachines_Leostream_CB_name')]",
+            "location": "[parameters('location')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "dependsOn": [
+                "[variables('cbNic')]",
+                "[variables('gwNic')]"
+            ],
+            "plan": {
+                "name": "9-base",
+                "product": "rockylinux-x86_64",
+                "publisher": "resf"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('linuxVmSize')]"
+                },
+                "additionalCapabilities": {
+                    "hibernationEnabled": false
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "communityGalleryImageId": "[parameters('cbImageId')]"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(parameters('virtualMachines_Leostream_CB_name'), '-osdisk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "deleteOption": "Delete"
+                    },
+                    "diskControllerType": "SCSI"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachines_Leostream_CB_name')]",
+                    "adminUsername": "[parameters('virtualMachines_Leostream_CB_name')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": false,
+                        "provisionVMAgent": true,
+                        "patchSettings": {
+                            "patchMode": "ImageDefault",
+                            "assessmentMode": "ImageDefault"
+                        }
+                    },
+                    "allowExtensionOperations": true,
+                    "customData": "[base64(concat('#cloud-config\nwrite_files:\n  - path: /etc/profile.d/myenv.sh\n    permissions: ''0755''\n    content: |\n      export GATEWAY_PRIV_ADDRESS=\"', reference(resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_leostream_gw_name'))).ipConfigurations[0].properties.privateIPAddress, '\"\n      export GATEWAY_PUB_ADDRESS=\"', reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_Leostream_GW_ip_name'))).ipAddress, '\"\n      export LEO_EMAIL=\"', parameters('adminEmail'), '\"\n      export LEO_CONTACT_NAME=\"', parameters('contactName'), '\"\n      export LEO_ADMIN_PASSWORD_BASE64=\"', base64(parameters('leoAdminPassword')), '\"'))]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[variables('cbNic')]",
+                            "properties": {
+                                "deleteOption": "Delete"
+                            }
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2023-09-01",
+            "name": "[parameters('virtualMachines_LeostreamGW_name')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('gwNic')]",
+                "[variables('cbNic')]"
+            ],
+            "plan": {
+                "name": "9-base",
+                "product": "rockylinux-x86_64",
+                "publisher": "resf"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('linuxVmSize')]"
+                },
+                "additionalCapabilities": {
+                    "hibernationEnabled": false
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "communityGalleryImageId": "[parameters('gwImageId')]"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(parameters('virtualMachines_LeostreamGW_name'), '-osdisk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "deleteOption": "Delete"
+                    },
+                    "diskControllerType": "SCSI"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachines_LeostreamGW_name')]",
+                    "adminUsername": "[parameters('virtualMachines_LeostreamGW_name')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": false,
+                        "provisionVMAgent": true,
+                        "patchSettings": {
+                            "patchMode": "ImageDefault",
+                            "assessmentMode": "ImageDefault"
+                        }
+                    },
+                    "allowExtensionOperations": true,
+                    "customData": "[base64(concat('#cloud-config\nwrite_files:\n  - path: /etc/profile.d/myenv.sh\n    permissions: ''0755''\n    content: |\n      export BROKER_IP=\"', reference(resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_leostream_cb_name'))).ipConfigurations[0].properties.privateIPAddress, '\"'))]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[variables('gwNic')]",
+                            "properties": {
+                                "deleteOption": "Delete"
+                            }
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2023-06-01",
+            "name": "[parameters('networkSecurityGroups_Leostream_Desktop_nsg_name')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('gwNic')]"
+            ],
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "RDP",
+                        "id": "[variables('desktopRdpRuleId')]",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "[reference(resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_leostream_gw_name'))).ipConfigurations[0].properties.privateIPAddress]",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 300,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2023-06-01",
+            "name": "[parameters('networkInterfaces_leostream_desktop_name')]",
+            "condition": "[not(equals(parameters('vnetNewOrExisting'), 'new'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('desktopNsgID')]",
+                "addSubnetToExistingVnet"
+            ],
+            "kind": "Regular",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "id": "[variables('nicDesktopIpconfig1')]",
+                        "type": "Microsoft.Network/networkInterfaces/ipConfigurations",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[if(equals(parameters('vnetNewOrExisting'), 'new'), variables('subnet1Id'), resourceId(parameters('vnetresourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('leostreamVnet').name, parameters('leostreamVnet').subnets.subnet1.name))]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "enableIPForwarding": false,
+                "disableTcpStateTracking": false,
+                "networkSecurityGroup": {
+                    "id": "[variables('desktopNsgID')]"
+                },
+                "nicType": "Standard",
+                "auxiliaryMode": "None",
+                "auxiliarySku": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2023-06-01",
+            "name": "[parameters('networkInterfaces_leostream_desktop_name')]",
+            "condition": "[equals(parameters('vnetNewOrExisting'), 'new')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('desktopNsgID')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('leostreamVnet').name)]"
+            ],
+            "kind": "Regular",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "id": "[variables('nicDesktopIpconfig1')]",
+                        "type": "Microsoft.Network/networkInterfaces/ipConfigurations",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[if(equals(parameters('vnetNewOrExisting'), 'new'), variables('subnet1Id'), resourceId(parameters('vnetresourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('leostreamVnet').name, parameters('leostreamVnet').subnets.subnet1.name))]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "enableIPForwarding": false,
+                "disableTcpStateTracking": false,
+                "networkSecurityGroup": {
+                    "id": "[variables('desktopNsgID')]"
+                },
+                "nicType": "Standard",
+                "auxiliaryMode": "None",
+                "auxiliarySku": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2023-09-01",
+            "name": "[parameters('virtualMachines_Leostream_Desktop_name')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('desktopNic')]",
+                "[variables('cbVm')]"
+            ],
+            "plan": "[if(and(equals(parameters('desktopImageType'), 'linux'), equals(variables('desktopDiskControllerType'), 'SCSI')), createObject('name', 'thinlinc-ubuntu-2204', 'product', 'thinlinc', 'publisher', 'cendio'), null())]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('desktopVmSize')]"
+                },
+                "additionalCapabilities": {
+                    "hibernationEnabled": false
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "communityGalleryImageId": "[variables('desktopImageId')]"
+                    },
+                    "osDisk": {
+                        "osType": "[if(equals(parameters('desktopImageType'), 'windows'), 'Windows', 'Linux')]",
+                        "name": "[concat(parameters('virtualMachines_Leostream_Desktop_name'), '-osdisk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "deleteOption": "Delete",
+                        "diskSizeGB": 127
+                    },
+                    "diskControllerType": "[variables('desktopDiskControllerType')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachines_Leostream_Desktop_name')]",
+                    "adminUsername": "[parameters('virtualMachines_Leostream_Desktop_name')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "windowsConfiguration": "[if(equals(parameters('desktopImageType'), 'windows'), createObject('provisionVMAgent', true(), 'enableAutomaticUpdates', true(), 'patchSettings', createObject('assessmentMode', 'ImageDefault', 'enableHotpatching', false())), null())]",
+                    "linuxConfiguration": "[if(equals(parameters('desktopImageType'), 'linux'), createObject('disablePasswordAuthentication', false(), 'provisionVMAgent', true(), 'patchSettings', createObject('patchMode', 'ImageDefault', 'assessmentMode', 'ImageDefault')), null())]",
+                    "allowExtensionOperations": true,
+                    "customData": "[if(equals(parameters('desktopImageType'), 'windows'), base64(reference(resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_leostream_cb_name'))).ipConfigurations[0].properties.privateIPAddress), base64(concat('#cloud-config\nwrite_files:\n  - path: /etc/profile.d/myenv.sh\n    permissions: ''0755''\n    content: |\n      export BROKER_IP=\"', reference(resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_leostream_cb_name'))).ipConfigurations[0].properties.privateIPAddress, '\"')))]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[variables('desktopNic')]",
+                            "properties": {
+                                "deleteOption": "Delete"
+                            }
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2023-09-01",
+            "name": "[concat(parameters('virtualMachines_Leostream_Desktop_name'), '/NvidiaGpuDriver')]",
+            "condition": "[not(equals(variables('desktopDiskControllerType'), 'NVMe'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('desktopVm')]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.HpcCompute",
+                "type": "[if(equals(parameters('desktopImageType'), 'windows'), 'NvidiaGpuDriverWindows', 'NvidiaGpuDriverLinux')]",
+                "typeHandlerVersion": "[if(equals(parameters('desktopImageType'), 'windows'), '1.4', '1.6')]",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "autoUpdate": false,
+                    "driverVersion": "535.161"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2023-06-01",
+            "name": "[parameters('networkInterfaces_leostream_gw_name')]",
+            "condition": "[not(equals(parameters('vnetNewOrExisting'), 'new'))]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('gwPublicIp')]",
+                "[variables('gwNsgID')]",
+                "addSubnetToExistingVnet"
+            ],
+            "kind": "Regular",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "id": "[variables('nicGwIpconfig1')]",
+                        "type": "Microsoft.Network/networkInterfaces/ipConfigurations",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[variables('gwPublicIp')]",
+                                "properties": {
+                                    "deleteOption": "Delete"
+                                }
+                            },
+                            "subnet": {
+                                "id": "[if(equals(parameters('vnetNewOrExisting'), 'new'), variables('subnet2Id'), resourceId(parameters('vnetresourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('leostreamVnet').name, parameters('leostreamVnet').subnets.subnet2.name))]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "enableIPForwarding": false,
+                "disableTcpStateTracking": false,
+                "networkSecurityGroup": {
+                    "id": "[variables('gwNsgID')]"
+                },
+                "nicType": "Standard",
+                "auxiliaryMode": "None",
+                "auxiliarySku": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2023-06-01",
+            "name": "[parameters('networkInterfaces_leostream_gw_name')]",
+            "condition": "[equals(parameters('vnetNewOrExisting'), 'new')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[variables('gwPublicIp')]",
+                "[variables('gwNsgID')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('leostreamVnet').name)]"
+            ],
+            "kind": "Regular",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "id": "[variables('nicGwIpconfig1')]",
+                        "type": "Microsoft.Network/networkInterfaces/ipConfigurations",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[variables('gwPublicIp')]",
+                                "properties": {
+                                    "deleteOption": "Delete"
+                                }
+                            },
+                            "subnet": {
+                                "id": "[if(equals(parameters('vnetNewOrExisting'), 'new'), variables('subnet2Id'), resourceId(parameters('vnetresourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('leostreamVnet').name, parameters('leostreamVnet').subnets.subnet2.name))]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": true,
+                "enableIPForwarding": false,
+                "disableTcpStateTracking": false,
+                "networkSecurityGroup": {
+                    "id": "[variables('gwNsgID')]"
+                },
+                "nicType": "Standard",
+                "auxiliaryMode": "None",
+                "auxiliarySku": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2023-06-01",
+            "name": "[parameters('networkInterfaces_leostream_cb_name')]",
+            "location": "[parameters('location')]",
+            "condition": "[not(equals(parameters('vnetNewOrExisting'), 'new'))]",
+            "dependsOn": [
+                "[variables('cbNsgID')]",
+                "addSubnetToExistingVnet"
+            ],
+            "kind": "Regular",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "id": "[variables('nicCbIpconfig1')]",
+                        "type": "Microsoft.Network/networkInterfaces/ipConfigurations",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[if(equals(parameters('vnetNewOrExisting'), 'new'), variables('subnet1Id'), resourceId(parameters('vnetresourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('leostreamVnet').name, parameters('leostreamVnet').subnets.subnet1.name))]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": false,
+                "enableIPForwarding": false,
+                "disableTcpStateTracking": false,
+                "networkSecurityGroup": {
+                    "id": "[variables('cbNsgID')]"
+                },
+                "nicType": "Standard",
+                "auxiliaryMode": "None",
+                "auxiliarySku": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2023-06-01",
+            "name": "[parameters('networkInterfaces_leostream_cb_name')]",
+            "location": "[parameters('location')]",
+            "condition": "[equals(parameters('vnetNewOrExisting'), 'new')]",
+            "dependsOn": [
+                "[variables('cbNsgID')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('leostreamVnet').name)]"
+            ],
+            "kind": "Regular",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "id": "[variables('nicCbIpconfig1')]",
+                        "type": "Microsoft.Network/networkInterfaces/ipConfigurations",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[if(equals(parameters('vnetNewOrExisting'), 'new'), variables('subnet1Id'), resourceId(parameters('vnetresourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('leostreamVnet').name, parameters('leostreamVnet').subnets.subnet1.name))]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": false,
+                "enableIPForwarding": false,
+                "disableTcpStateTracking": false,
+                "networkSecurityGroup": {
+                    "id": "[variables('cbNsgID')]"
+                },
+                "nicType": "Standard",
+                "auxiliaryMode": "None",
+                "auxiliarySku": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[variables('desktopContributorRoleName')]",
+            "scope": "[variables('desktopVm')]",
+            "properties": {
+                "roleDefinitionId": "[variables('contributorRoleId')]",
+                "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_Leostream_CB_name')), '2023-09-01', 'Full').identity.principalId]"
+            },
+            "dependsOn": [
+                "[variables('cbVm')]",
+                "[variables('desktopVm')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[variables('desktopReaderRoleName')]",
+            "scope": "[variables('desktopNic')]",
+            "properties": {
+                "roleDefinitionId": "[variables('readerRoleId')]",
+                "principalId": "[reference(resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_Leostream_CB_name')), '2023-09-01', 'Full').identity.principalId]"
+            },
+            "dependsOn": [
+                "[variables('cbVm')]",
+                "[variables('desktopVm')]"
+            ]
+        }
+    ],
+    "outputs": {
+        "Admin Login URL": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_Leostream_GW_ip_name'))).ipAddress]"
+        },
+        "Quickstart Guide": {
+            "type": "string",
+            "value": "https://docs.leostream.com/v202x/quick_start_Leostream_with_Microsoft_Azure_clouds.pdf"
+        },
+        "Connection Broker Admin Username": {
+            "type": "string",
+            "value": "[parameters('virtualMachines_Leostream_CB_name')]"
+        },
+        "Gateway Admin Username": {
+            "type": "string",
+            "value": "[parameters('virtualMachines_LeostreamGW_name')]"
+        },
+        "Desktop Admin Username": {
+            "type": "string",
+            "value": "[parameters('virtualMachines_Leostream_Desktop_name')]"
+        }
+    }
+}

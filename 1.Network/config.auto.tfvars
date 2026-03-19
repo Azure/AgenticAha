@@ -204,6 +204,15 @@ hubVirtualNetworks = [
         serviceDelegation = null
       },
       {
+        name = "DMZ"
+        addressSpace = [
+          "10.0.253.0/24"
+        ]
+        serviceEndpoints = [
+        ]
+        serviceDelegation = null
+      },
+      {
         name = "GatewaySubnet"
         addressSpace = [
           "10.0.254.0/25"

@@ -334,35 +334,6 @@ virtualMachines = [
   }
 ]
 
-###############################################################################
-# Cendio ThinLinc (https://marketplace.microsoft.com/product/cendio.thinlinc) #
-###############################################################################
-
-thinLinc = {
-  enable = false
-  name   = "aihpc"
-  size   = "Standard_NV36ads_A10_v5" # https://learn.microsoft.com/azure/virtual-machines/sizes
-  image = {
-    publisher = "Cendio"
-    product   = "ThinLinc"
-    name      = "ThinLinc-AlmaLinux-9"
-    version   = "Latest"
-  }
-  osDisk = {
-    storageType = "Premium_LRS"
-    cachingMode = "ReadWrite"
-    sizeGB      = 0
-  }
-  adminLogin = {
-    userName     = ""
-    userPassword = ""
-    sshKeyPublic = ""
-    passwordAuth = {
-      disable = true
-    }
-  }
-}
-
 ################################################################################
 # Virtual Desktop (https://learn.microsoft.com/azure/virtual-desktop/overview) #
 ################################################################################
@@ -449,6 +420,29 @@ virtualDesktop = {
   ]
 }
 
+################################################################################################################
+# Leostream Platform (https://marketplace.microsoft.com/product/leostreamcorp1748546752602.leostream_platform) #
+################################################################################################################
+
+leostream = {
+  enable = false
+  name   = "Leostream-Platform"
+  contact = {
+    name  = "Rick Shahid"
+    email = "rick.shahid@microsoft.com"
+  }
+  broker = {
+    size = "Standard_D2as_v5"
+  }
+  desktop = {
+    type = "windows"
+    size = "Standard_NV6ads_A10_v5"
+  }
+  adminLogin = {
+    userPassword = ""
+  }
+}
+
 #########################
 # Dependency References #
 #########################
@@ -480,6 +474,7 @@ monitor = { # https://learn.microsoft.com/azure/azure-monitor/monitor-overview
 virtualNetwork = { # https://learn.microsoft.com/azure/virtual-network/virtual-networks-overview
   name              = "HPC"
   subnetName        = "VDI"
+  subnetNameDMZ     = "DMZ"
   edgeZoneName      = "" # "LosAngeles"
   resourceGroupName = "HPC.Network.SouthCentralUS" # "HPC.Network.WestUS.LosAngeles"
 }

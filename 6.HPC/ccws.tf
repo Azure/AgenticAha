@@ -60,6 +60,7 @@ variable ccWorkspace {
               versionId      = string
             })
           })
+          availabilityZone = list(string)
         })
         htc = object({
           nodeSize = string
@@ -73,6 +74,7 @@ variable ccWorkspace {
               versionId      = string
             })
           })
+          availabilityZone = list(string)
         })
         gpu = object({
           nodeSize = string
@@ -85,6 +87,7 @@ variable ccWorkspace {
               versionId      = string
             })
           })
+          availabilityZone = list(string)
         })
       })
       jobAccounting = object({
@@ -244,24 +247,27 @@ locals {
     }
     hpc = {
       value = {
-        sku      = var.ccWorkspace.slurm.partition.hpc.nodeSize
-        osImage  = var.ccWorkspace.slurm.partition.hpc.image.custom.enable ? "${data.azurerm_shared_image_gallery.main.id}/images/${var.ccWorkspace.slurm.partition.hpc.image.custom.definitionName}/versions/${var.ccWorkspace.slurm.partition.hpc.image.custom.versionId}" : var.ccWorkspace.slurm.partition.hpc.image.type
-        maxNodes = var.ccWorkspace.slurm.partition.hpc.maxNodes
+        sku              = var.ccWorkspace.slurm.partition.hpc.nodeSize
+        osImage          = var.ccWorkspace.slurm.partition.hpc.image.custom.enable ? "${data.azurerm_shared_image_gallery.main.id}/images/${var.ccWorkspace.slurm.partition.hpc.image.custom.definitionName}/versions/${var.ccWorkspace.slurm.partition.hpc.image.custom.versionId}" : var.ccWorkspace.slurm.partition.hpc.image.type
+        maxNodes         = var.ccWorkspace.slurm.partition.hpc.maxNodes
+        availabilityZone = var.ccWorkspace.slurm.partition.hpc.availabilityZone
       }
     }
     htc = {
       value = {
-        sku      = var.ccWorkspace.slurm.partition.htc.nodeSize
-        osImage  = var.ccWorkspace.slurm.partition.htc.image.custom.enable ? "${data.azurerm_shared_image_gallery.main.id}/images/${var.ccWorkspace.slurm.partition.htc.image.custom.definitionName}/versions/${var.ccWorkspace.slurm.partition.htc.image.custom.versionId}" : var.ccWorkspace.slurm.partition.htc.image.type
-        maxNodes = var.ccWorkspace.slurm.partition.htc.maxNodes
-        useSpot  = var.ccWorkspace.slurm.partition.htc.useSpot
+        sku              = var.ccWorkspace.slurm.partition.htc.nodeSize
+        osImage          = var.ccWorkspace.slurm.partition.htc.image.custom.enable ? "${data.azurerm_shared_image_gallery.main.id}/images/${var.ccWorkspace.slurm.partition.htc.image.custom.definitionName}/versions/${var.ccWorkspace.slurm.partition.htc.image.custom.versionId}" : var.ccWorkspace.slurm.partition.htc.image.type
+        maxNodes         = var.ccWorkspace.slurm.partition.htc.maxNodes
+        useSpot          = var.ccWorkspace.slurm.partition.htc.useSpot
+        availabilityZone = var.ccWorkspace.slurm.partition.htc.availabilityZone
       }
     }
     gpu = {
       value = {
-        sku      = var.ccWorkspace.slurm.partition.gpu.nodeSize
-        osImage  = var.ccWorkspace.slurm.partition.gpu.image.custom.enable ? "${data.azurerm_shared_image_gallery.main.id}/images/${var.ccWorkspace.slurm.partition.gpu.image.custom.definitionName}/versions/${var.ccWorkspace.slurm.partition.gpu.image.custom.versionId}" : var.ccWorkspace.slurm.partition.gpu.image.type
-        maxNodes = var.ccWorkspace.slurm.partition.gpu.maxNodes
+        sku              = var.ccWorkspace.slurm.partition.gpu.nodeSize
+        osImage          = var.ccWorkspace.slurm.partition.gpu.image.custom.enable ? "${data.azurerm_shared_image_gallery.main.id}/images/${var.ccWorkspace.slurm.partition.gpu.image.custom.definitionName}/versions/${var.ccWorkspace.slurm.partition.gpu.image.custom.versionId}" : var.ccWorkspace.slurm.partition.gpu.image.type
+        maxNodes         = var.ccWorkspace.slurm.partition.gpu.maxNodes
+        availabilityZone = var.ccWorkspace.slurm.partition.gpu.availabilityZone
       }
     }
     ood = {

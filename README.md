@@ -1,6 +1,6 @@
 # Azure Agentic Aha (AAA) Deployment Framework
 
-Azure Agentic Aha (AAA) is a *modular and flexible* [Infrastructure as Code (IaC)](https://learn.microsoft.com/devops/deliver/what-is-infrastructure-as-code) solution deployment framework for the [Microsoft Discovery Agentic AI](https://aka.ms/MicrosoftDiscovery) managed platform & [Azure High-Performance Computing (HPC)](https://learn.microsoft.com/azure/architecture/topics/high-performance-computing) infrastructure.
+Azure Agentic Aha (AAA) is a *modular and flexible* [Infrastructure as Code (IaC)](https://learn.microsoft.com/devops/deliver/what-is-infrastructure-as-code) solution deployment framework for the [Microsoft Discovery Agentic AI](https://aka.ms/MicrosoftDiscovery) managed platform & [Azure High-Performance Computing (HPC)](https://learn.microsoft.com/azure/well-architected/hpc/get-started-overview) workloads.
 
 The following solution design principles and features are implemented throughout the AAA deployment framework.
 * Defense-in-depth layered security with core service integration across [Managed Identity](https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview), [Key Vault](https://learn.microsoft.com/azure/key-vault/general/overview), [Private Link](https://learn.microsoft.com/azure/private-link/private-link-overview),</br>[Private Endpoints](https://learn.microsoft.com/azure/private-link/private-endpoint-overview), [Network Security Groups](https://learn.microsoft.com/azure/virtual-network/network-security-groups-overview), [Network Security Perimeter](https://learn.microsoft.com/azure/private-link/network-security-perimeter-concepts), [NAT Gateway](https://learn.microsoft.com/azure/nat-gateway/nat-overview), [Bastion](https://learn.microsoft.com/azure/bastion/bastion-overview), [Firewall](https://learn.microsoft.com/azure/firewall/overview), etc
@@ -11,7 +11,7 @@ The following solution design principles and features are implemented throughout
 
 ## Typical Azure HPC & AI Cluster Architecture
 
-<img src="https://github.com/user-attachments/assets/e27427a0-f666-45cd-a65a-688e32ddb389" /><br/>
+<img src="https://github.com/user-attachments/assets/5d2bf13e-1b0b-4e93-9d4c-b3d41a4ffb38" /><br/>
 
 | **Module Name** | **Module Description** | **Required for<br/>Burst Compute?<br/>(*On-Prem Storage*)** | **Required for<br/>Full Deployment?<br/>(*Compute & Storage*)** |
 | - | - | - | - |
@@ -22,7 +22,7 @@ The following solution design principles and features are implemented throughout
 | [4 File Cache](https://github.com/Azure/AgenticAha/tree/main/4.File.Cache) | Deploys [Azure NetApp Files (ANF) Cache Volumes](https://learn.microsoft.com/azure/azure-netapp-files/cache-volumes) with NetApp ONTAP integration | Yes | No |
 | [5 Data](https://github.com/Azure/AgenticAha/tree/main/5.Data) | Deploys [Azure Cosmos DB](https://learn.microsoft.com/azure/cosmos-db/overview) and [Azure Database for MySQL Flexible Server](https://learn.microsoft.com/azure/mysql/flexible-server/overview) | No | No |
 | [6 HPC](https://github.com/Azure/AgenticAha/tree/main/6.HPC) | Deploys [Microsoft Discovery Agentic AI](https://aka.ms/MicrosoftDiscovery) managed platform and multi-region [Azure CycleCloud Workspace for Slurm (CCWS)](https://learn.microsoft.com/azure/cyclecloud/overview-ccws) | Yes | Yes |
-| [7 VDI](https://github.com/Azure/AgenticAha/tree/main/7.VDI) | Deploys user workstation [Virtual Machines](https://learn.microsoft.com/azure/virtual-machines/overview), [ThinLinc Remote Desktop Server](https://marketplace.microsoft.com/product/cendio.thinlinc) and [Azure Virtual Desktop (AVD)](https://learn.microsoft.com/azure/virtual-desktop/overview) host pool | No | No |
+| [7 VDI](https://github.com/Azure/AgenticAha/tree/main/7.VDI) | Deploys user workstation [Virtual Machines](https://learn.microsoft.com/azure/virtual-machines/overview), [Virtual Desktop](https://learn.microsoft.com/azure/virtual-desktop/overview) and [Leostream Platform](https://marketplace.microsoft.com/product/leostreamcorp1748546752602.leostream_platform) | No | No |
 
 ## Local Installation Process
 

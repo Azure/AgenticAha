@@ -6,7 +6,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~>4.62.0"
+      version = "~>4.65.0"
     }
   }
   backend azurerm {
@@ -17,6 +17,9 @@ terraform {
 
 provider azurerm {
   features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
     virtual_machine {
       delete_os_disk_on_deletion            = true
       skip_shutdown_and_force_delete        = false
@@ -69,6 +72,7 @@ variable virtualNetwork {
   type = object({
     name              = string
     subnetName        = string
+    subnetNameDMZ     = string
     edgeZoneName      = string
     resourceGroupName = string
   })
@@ -145,6 +149,12 @@ data azurerm_subnet vdi {
   virtual_network_name = data.azurerm_virtual_network.main.name
 }
 
+data azurerm_subnet vdi_dmz {
+  name                 = var.virtualNetwork.subnetNameDMZ
+  resource_group_name  = data.azurerm_virtual_network.main.resource_group_name
+  virtual_network_name = data.azurerm_virtual_network.main.name
+}
+
 data azurerm_shared_image_gallery main {
   name                = var.computeGallery.name
   resource_group_name = var.computeGallery.resourceGroupName
@@ -158,18 +168,18 @@ resource azurerm_resource_group vdi {
   }
 }
 
-resource azurerm_resource_group vdi_thinlinc {
-  count    = var.thinLinc.enable ? 1 : 0
-  name     = "${var.resourceGroupName}.ThinLinc"
+resource azurerm_resource_group vdi_avd {
+  count    = var.virtualDesktop.enable ? 1 : 0
+  name     = "${var.resourceGroupName}.AVD"
   location = data.azurerm_virtual_network.main.location
   tags = {
     Module = basename(path.cwd)
   }
 }
 
-resource azurerm_resource_group vdi_avd {
-  count    = var.virtualDesktop.enable ? 1 : 0
-  name     = "${var.resourceGroupName}.AVD"
+resource azurerm_resource_group vdi_leostream {
+  count    = var.leostream.enable ? 1 : 0
+  name     = "${var.resourceGroupName}.Leostream"
   location = data.azurerm_virtual_network.main.location
   tags = {
     Module = basename(path.cwd)

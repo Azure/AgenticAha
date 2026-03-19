@@ -7,8 +7,8 @@
 
 variable netAppCVO {
   type = object({
-    enable  = bool
-    name    = string
+    enable = bool
+    name   = string
     resourceGroup = object({
       name     = string
       location = string
@@ -20,6 +20,17 @@ variable netAppCVO {
     highAvailability = object({
       zone = string
     })
+    adminLogin = object({
+      userName     = string
+      userPassword = string
+    })
+  })
+}
+
+locals {
+  adminLogin = merge(var.netAppCVO.adminLogin, {
+    userName     = var.netAppCVO.adminLogin.userName != "" ? var.netAppCVO.adminLogin.userName : data.azurerm_key_vault_secret.admin_username.value
+    userPassword = var.netAppCVO.adminLogin.userPassword != "" ? var.netAppCVO.adminLogin.userPassword : data.azurerm_key_vault_secret.admin_password.value
   })
 }
 
@@ -38,56 +49,53 @@ resource azurerm_resource_group_template_deployment netapp_cvo {
   resource_group_name = azurerm_resource_group.netapp_cvo[0].name
   deployment_mode     = "Incremental"
   parameters_content = jsonencode({
-    "location": {
-      "value": "${azurerm_resource_group.netapp_cvo[0].location}"
-    },
-    "instanceName": {
-      "value": "${var.netAppCVO.machine.namePrefix}"
-    },
-    "instanceType": {
-      "value": "${var.netAppCVO.machine.size}"
-    },
-    "adminUsername": {
-      "value": "${data.azurerm_key_vault_secret.admin_username.value}"
-    },
-    "adminPassword": {
-      "value": "${data.azurerm_key_vault_secret.admin_password.value}"
-    },
-    "subnetId": {
-      "value": "${data.azurerm_subnet.storage.id}"
-    },
-    "networkSecurityGroupId": {
-      "value": "${data.azurerm_network_security_group.storage.id}"
-    },
-    "vm1Zone": {
-      "value": "${var.netAppCVO.highAvailability.zone}"
-    },
-    "vm2Zone": {
-      "value": "${var.netAppCVO.highAvailability.zone}"
+    instanceName = {
+      value = var.netAppCVO.machine.namePrefix
     }
-    "sharedHaType": {
-      "value": "lrs"
-    },
-    "marketplaceOffer": {
-      "value": "netapp-ontap-cloud"
-    },
-    "marketplaceSKU": {
-      "value": "ontap_cloud_marketplace_direct"
-    },
-    "marketplaceVersion": {
-      "value": "9161.02000025.03190033"
-    },
-    "vm1PlatformSerialNumber": {
-      "value": "91220149999999999991"
-    },
-    "vm2PlatformSerialNumber": {
-      "value": "91220149999999999992"
-    },
-    "vnetName": {
-      "value": "${data.azurerm_virtual_network.storage.name}"
-    },
-    "subnetAddressPrefix": {
-      "value": "${data.azurerm_subnet.storage.address_prefixes[0]}"
+    instanceType = {
+      value = var.netAppCVO.machine.size
+    }
+    adminUsername = {
+      value = local.adminLogin.userName
+    }
+    adminPassword = {
+      value = local.adminLogin.userPassword
+    }
+    subnetId = {
+      value = data.azurerm_subnet.storage.id
+    }
+    networkSecurityGroupId = {
+      value = data.azurerm_network_security_group.storage.id
+    }
+    vm1Zone = {
+      value = var.netAppCVO.highAvailability.zone
+    }
+    vm2Zone = {
+      value = var.netAppCVO.highAvailability.zone
+    }
+    sharedHaType = {
+      value = "lrs"
+    }
+    marketplaceOffer = {
+      value = "netapp-ontap-cloud"
+    }
+    marketplaceSKU = {
+      value = "ontap_cloud_marketplace_direct"
+    }
+    marketplaceVersion = {
+      value = "9161.02000025.03190033"
+    }
+    vm1PlatformSerialNumber = {
+      value = "91220149999999999991"
+    }
+    vm2PlatformSerialNumber = {
+      value = "91220149999999999992"
+    }
+    vnetName = {
+      value = data.azurerm_virtual_network.storage.name
+    }
+    subnetAddressPrefix = {
+      value = data.azurerm_subnet.storage.address_prefixes[0]
     }
   })
   template_content = file("netappcvo.json")

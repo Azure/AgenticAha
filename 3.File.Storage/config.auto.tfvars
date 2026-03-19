@@ -160,7 +160,7 @@ netAppFiles = {
 ######################################################################################################
 
 lustreFiles = {
-  enable  = true
+  enable  = false
   name    = "aihpc"
   type    = "AMLFS-Durable-Premium-40" # https://learn.microsoft.com/azure/azure-managed-lustre/create-file-system-resource-manager#file-system-type-and-size-options
   sizeTiB = 48
