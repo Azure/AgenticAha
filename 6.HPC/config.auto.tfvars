@@ -22,29 +22,38 @@ ccWorkspace = {
     machine = {
       name = "ccws"
       size = "Standard_D4as_v5"
+      updateManager = {
+        enable = false
+      }
     }
   }
   loginNode = {
     size     = "Standard_D4as_v5"
     maxNodes = 3
     image = {
-      type = "almalinux9"
+      type = "cycle.image.ubuntu24"
       custom = {
         enable         = false
         definitionName = "x64Lnx"
         versionId      = "1.1.0"
       }
     }
+    updateManager = {
+      enable = true
+    }
   }
   scheduler = {
     size = "Standard_D4as_v5"
     image = {
-      type = "almalinux9"
+      type = "cycle.image.ubuntu24"
       custom = {
         enable         = false
         definitionName = "x64Lnx"
         versionId      = "1.0.0"
       }
+    }
+    updateManager = {
+      enable = true
     }
   }
   slurm = {
@@ -114,7 +123,7 @@ ccWorkspace = {
     userDomain   = "aihpc.com"
     startCluster = false
     image = {
-      type = "almalinux9"
+      type = "cycle.image.ubuntu24"
       custom = {
         enable         = false
         definitionName = "x64Lnx"
@@ -214,6 +223,52 @@ search = {
   hostingMode    = "default"
   replicaCount   = 1
   partitionCount = 1
+}
+
+##############################################################################
+# Update Manager (https://learn.microsoft.com/azure/update-manager/overview) #
+##############################################################################
+
+updateManager = {
+  enable = true
+  name   = "aihpc"
+  guestPatch = {
+    window = {
+      timeZone      = "UTC"
+      duration      = "01:30"
+      recurrence    = "Day"
+      startDateTime = "2026-01-01 00:00"
+    }
+    userMode = {
+      classifications = {
+        linux = [
+          "Critical",
+          "Security",
+          "Other"
+        ]
+        windows = [
+          "Critical",
+          "Security",
+          "UpdateRollup",
+          "FeaturePack",
+          "ServicePack",
+          "Definition",
+          "Tools",
+          "Updates"
+        ]
+      }
+      reboot = "IfRequired"
+    }
+  }
+}
+
+#############################################################################
+# AKS Automatic (https://learn.microsoft.com/azure/aks/intro-aks-automatic) #
+#############################################################################
+
+aksAutomatic = {
+  enable = false
+  name   = "aihpc"
 }
 
 #########################

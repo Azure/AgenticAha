@@ -5,17 +5,6 @@
 # CycleCloud Workspace for Slurm (https://learn.microsoft.com/azure/cyclecloud/overview-ccws) #
 ###############################################################################################
 
-data azurerm_virtual_machine ccws {
-  for_each = {
-    for ccwsCluster in local.ccwsClusters : ccwsCluster.resourceGroup.value => ccwsCluster
-  }
-  name                = each.value.ccVMName.value
-  resource_group_name = each.value.resourceGroup.value
-  depends_on = [
-    terraform_data.ccws
-  ]
-}
-
 resource azurerm_network_interface ccws_init {
   for_each = {
     for ccwsCluster in local.ccwsClusters : ccwsCluster.resourceGroup.value => ccwsCluster

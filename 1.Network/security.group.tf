@@ -35,35 +35,45 @@ resource azurerm_network_security_group main {
     destination_port_range     = "*"
   }
   dynamic security_rule {
-    for_each = each.value.name == "VDI" ? [1] : []
+    for_each = each.value.name == "DMZ" ? [1] : []
     content {
-      name                       = "AllowInPCoIP.TCP"
-      priority                   = 2100
+      name                       = "AllowInGateway"
+      priority                   = 350
       direction                  = "Inbound"
       access                     = "Allow"
-      protocol                   = "Tcp"
-      source_address_prefix      = "Internet"
+      protocol                   = "*"
+      source_address_prefix      = "*"
       source_port_range          = "*"
       destination_address_prefix = "*"
-      destination_port_ranges = [
-        "443",
-        "4172",
-        "60433"
-      ]
+      destination_port_range     = "20001-23000"
     }
   }
   dynamic security_rule {
-    for_each = each.value.name == "VDI" ? [1] : []
+    for_each = each.value.name == "DMZ" ? [1] : []
     content {
-      name                       = "AllowInPCoIP.UDP"
-      priority                   = 2000
+      name                       = "AllowInHTTP"
+      priority                   = 340
       direction                  = "Inbound"
       access                     = "Allow"
-      protocol                   = "Udp"
-      source_address_prefix      = "Internet"
+      protocol                   = "Tcp"
+      source_address_prefix      = "*"
       source_port_range          = "*"
       destination_address_prefix = "*"
-      destination_port_range     = "4172"
+      destination_port_range     = "80"
+    }
+  }
+  dynamic security_rule {
+    for_each = each.value.name == "DMZ" ? [1] : []
+    content {
+      name                       = "AllowInHTTPS"
+      priority                   = 320
+      direction                  = "Inbound"
+      access                     = "Allow"
+      protocol                   = "Tcp"
+      source_address_prefix      = "*"
+      source_port_range          = "*"
+      destination_address_prefix = "*"
+      destination_port_range     = "443"
     }
   }
   depends_on = [

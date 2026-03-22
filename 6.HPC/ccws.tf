@@ -21,6 +21,9 @@ variable ccWorkspace {
       machine = object({
         name = string
         size = string
+        updateManager = object({
+          enable = bool
+        })
       })
     })
     loginNode = object({
@@ -34,6 +37,9 @@ variable ccWorkspace {
           versionId      = string
         })
       })
+      updateManager = object({
+        enable = bool
+      })
     })
     scheduler = object({
       size = string
@@ -44,6 +50,9 @@ variable ccWorkspace {
           definitionName = string
           versionId      = string
         })
+      })
+      updateManager = object({
+        enable = bool
       })
     })
     slurm = object({
@@ -326,6 +335,17 @@ locals {
   })
 }
 
+data azurerm_virtual_machine ccws {
+  for_each = {
+    for ccwsCluster in local.ccwsClusters : ccwsCluster.resourceGroup.value => ccwsCluster
+  }
+  name                = each.value.ccVMName.value
+  resource_group_name = each.value.resourceGroup.value
+  depends_on = [
+    terraform_data.ccws
+  ]
+}
+
 resource terraform_data mysql {
   count = var.ccWorkspace.enable ? 1 : 0
   provisioner local-exec {
@@ -357,4 +377,22 @@ resource terraform_data ccws {
   depends_on = [
     azurerm_resource_group.cyclecloud
   ]
+}
+
+resource terraform_data update_manager_cyclecloud {
+  for_each = {
+    for ccwsCluster in local.ccwsClusters : ccwsCluster.resourceGroup.value => ccwsCluster if var.updateManager.enable && var.ccWorkspace.cycleCloud.machine.updateManager.enable
+  }
+  provisioner local-exec {
+    command = "az vm update --resource-group ${each.value.resourceGroup.value} --name ${each.value.ccVMName.value} --set osProfile.linuxConfiguration.patchSettings.patchMode=AutomaticByPlatform --set osProfile.linuxConfiguration.patchSettings.bypassPlatformSafetyChecksOnUserSchedule=true"
+  }
+  depends_on = [
+    terraform_data.ccws
+  ]
+}
+
+output cycleCloud {
+  value = var.ccWorkspace.enable ? {
+    ip = values(data.azurerm_virtual_machine.ccws)[0].private_ip_address
+  } : null
 }

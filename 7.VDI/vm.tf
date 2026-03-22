@@ -59,6 +59,9 @@ variable virtualMachines {
         disable = bool
       })
     })
+    updateManager = object({
+      enable = bool
+    })
   }))
 }
 
@@ -107,15 +110,17 @@ resource azurerm_linux_virtual_machine vdi {
   for_each = {
     for virtualMachine in local.virtualMachines : virtualMachine.name => virtualMachine if lower(virtualMachine.osDisk.type) == "linux"
   }
-  name                            = each.value.name
-  resource_group_name             = azurerm_resource_group.vdi.name
-  location                        = each.value.location
-  edge_zone                       = each.value.edgeZone
-  size                            = each.value.size
-  source_image_id                 = each.value.image.custom.enable ? "${data.azurerm_shared_image_gallery.main.id}/images/${each.value.image.custom.definitionName}/versions/${each.value.image.custom.versionId}" : null
-  admin_username                  = each.value.adminLogin.userName
-  admin_password                  = each.value.adminLogin.userPassword
-  disable_password_authentication = each.value.adminLogin.passwordAuth.disable
+  name                                                   = each.value.name
+  resource_group_name                                    = azurerm_resource_group.vdi.name
+  location                                               = each.value.location
+  edge_zone                                              = each.value.edgeZone
+  size                                                   = each.value.size
+  source_image_id                                        = each.value.image.custom.enable ? "${data.azurerm_shared_image_gallery.main.id}/images/${each.value.image.custom.definitionName}/versions/${each.value.image.custom.versionId}" : null
+  admin_username                                         = each.value.adminLogin.userName
+  admin_password                                         = each.value.adminLogin.userPassword
+  disable_password_authentication                        = each.value.adminLogin.passwordAuth.disable
+  bypass_platform_safety_checks_on_user_schedule_enabled = each.value.updateManager.enable
+  patch_mode                                             = each.value.updateManager.enable ? "AutomaticByPlatform" : "ImageDefault"
   identity {
     type = "UserAssigned"
     identity_ids = [
@@ -204,14 +209,16 @@ resource azurerm_windows_virtual_machine vdi {
   for_each = {
     for virtualMachine in local.virtualMachines : virtualMachine.name => virtualMachine if lower(virtualMachine.osDisk.type) == "windows"
   }
-  name                = each.value.name
-  resource_group_name = azurerm_resource_group.vdi.name
-  location            = each.value.location
-  edge_zone           = each.value.edgeZone
-  size                = each.value.size
-  source_image_id     = each.value.image.custom.enable ? "${data.azurerm_shared_image_gallery.main.id}/images/${each.value.image.custom.definitionName}/versions/${each.value.image.custom.versionId}" : null
-  admin_username      = each.value.adminLogin.userName
-  admin_password      = each.value.adminLogin.userPassword
+  name                                                   = each.value.name
+  resource_group_name                                    = azurerm_resource_group.vdi.name
+  location                                               = each.value.location
+  edge_zone                                              = each.value.edgeZone
+  size                                                   = each.value.size
+  source_image_id                                        = each.value.image.custom.enable ? "${data.azurerm_shared_image_gallery.main.id}/images/${each.value.image.custom.definitionName}/versions/${each.value.image.custom.versionId}" : null
+  admin_username                                         = each.value.adminLogin.userName
+  admin_password                                         = each.value.adminLogin.userPassword
+  bypass_platform_safety_checks_on_user_schedule_enabled = each.value.updateManager.enable
+  patch_mode                                             = each.value.updateManager.enable ? "AutomaticByPlatform" : "ImageDefault"
   identity {
     type = "UserAssigned"
     identity_ids = [

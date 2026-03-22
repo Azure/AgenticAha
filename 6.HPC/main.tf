@@ -273,6 +273,15 @@ resource azurerm_resource_group cyclecloud {
   }
 }
 
+resource azurerm_resource_group aks {
+  count    = var.aksAutomatic.enable ? 1 : 0
+  name     = "${var.resourceGroupName}.AKS"
+  location = data.azurerm_virtual_network.main[var.virtualNetwork.resourceGroupName].location
+  tags = {
+    Module = basename(path.cwd)
+  }
+}
+
 resource azurerm_resource_group ai_discovery {
   count    = var.discovery.enable ? 1 : 0
   name     = "${var.resourceGroupName}.AI.Discovery"
@@ -294,6 +303,15 @@ resource azurerm_resource_group ai_foundry {
 resource azurerm_resource_group ai_search {
   count    = var.search.enable ? 1 : 0
   name     = "${var.resourceGroupName}.AI.Search"
+  location = data.azurerm_virtual_network.main[var.virtualNetwork.resourceGroupName].location
+  tags = {
+    Module = basename(path.cwd)
+  }
+}
+
+resource azurerm_resource_group update_manager {
+  count    = var.updateManager.enable ? 1 : 0
+  name     = "${var.resourceGroupName}.UpdateManager"
   location = data.azurerm_virtual_network.main[var.virtualNetwork.resourceGroupName].location
   tags = {
     Module = basename(path.cwd)

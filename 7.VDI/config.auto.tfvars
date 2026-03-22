@@ -61,6 +61,9 @@ virtualMachines = [
         disable = true
       }
     }
+    updateManager = {
+      enable = false
+    }
   },
   {
     enable = false
@@ -114,6 +117,9 @@ virtualMachines = [
       passwordAuth = {
         disable = true
       }
+    }
+    updateManager = {
+      enable = false
     }
   },
   {
@@ -169,6 +175,9 @@ virtualMachines = [
         disable = true
       }
     }
+    updateManager = {
+      enable = false
+    }
   },
   {
     enable = false
@@ -222,6 +231,9 @@ virtualMachines = [
       passwordAuth = {
         disable = false
       }
+    }
+    updateManager = {
+      enable = false
     }
   },
   {
@@ -277,6 +289,9 @@ virtualMachines = [
         disable = false
       }
     }
+    updateManager = {
+      enable = false
+    }
   },
   {
     enable = false
@@ -331,6 +346,9 @@ virtualMachines = [
         disable = true
       }
     }
+    updateManager = {
+      enable = false
+    }
   }
 ]
 
@@ -367,7 +385,7 @@ virtualDesktop = {
       properties = ""
     }
     expiration = {
-      hours = 720
+      hours = 168
     }
   }
   appGroups = [
@@ -440,6 +458,43 @@ leostream = {
   }
   adminLogin = {
     userPassword = ""
+  }
+}
+
+##############################################################################
+# Update Manager (https://learn.microsoft.com/azure/update-manager/overview) #
+##############################################################################
+
+updateManager = {
+  enable = true
+  name   = "aihpc"
+  guestPatch = {
+    window = {
+      timeZone      = "UTC"
+      duration      = "01:30"
+      recurrence    = "Day"
+      startDateTime = "2026-01-01 00:00"
+    }
+    userMode = {
+      classifications = {
+        linux = [
+          "Critical",
+          "Security",
+          "Other"
+        ]
+        windows = [
+          "Critical",
+          "Security",
+          "UpdateRollup",
+          "FeaturePack",
+          "ServicePack",
+          "Definition",
+          "Tools",
+          "Updates"
+        ]
+      }
+      reboot = "IfRequired"
+    }
   }
 }
 

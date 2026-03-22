@@ -185,3 +185,12 @@ resource azurerm_resource_group vdi_leostream {
     Module = basename(path.cwd)
   }
 }
+
+resource azurerm_resource_group vdi_update_manager {
+  count    = var.updateManager.enable ? 1 : 0
+  name     = "${var.resourceGroupName}.UpdateManager"
+  location = data.azurerm_virtual_network.main.location
+  tags = {
+    Module = basename(path.cwd)
+  }
+}
