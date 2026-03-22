@@ -34,7 +34,7 @@ The following local installation process is required for module deployment orche
 
 ## Module Configuration & Deployment
 
-The following table describes the module configuration and deployment process using Terraform commands on your local workstation.
+The following table describes the module configuration and deployment process from your local workstation.
 
 | **Module Name** | **Module Configuration** |
 | - | - |
